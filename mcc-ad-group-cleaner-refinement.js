@@ -219,6 +219,7 @@ function main()
 		var selectedKeyword = '';
 		var keywordScore = 0.0;
 		var defaultScore = 0;
+		var outputJaroResult = '';
 		addKeywordProcess = false;
 		adGroupNameForNewKeyword = "";
 		
@@ -237,6 +238,7 @@ function main()
 		while (adGroupIterator.hasNext()) {
 			var adGroup = adGroupIterator.next();
 			var adGroupName = adGroup.getName();
+			
 			
 			// skip checking Semantic Similarity if Keyword and new Ad Group is a perfect match.
 			// just add the keyword to new ad group and pause from the old ad group.
@@ -261,13 +263,14 @@ function main()
 				var formerAdGroupComboScore = calculateMatch.jwDistance(adGroupNameForNewKeyword, cleanKeyword);
 				var newestAdGroupComboScore = calculateMatch.jwDistance(cleanAdGroupName, cleanKeyword);
 				
+				outputJaroResult = "Semantic Tie Found! Jaro Winkler implemented...\n(" + adGroupNameForNewKeyword +", " + cleanKeyword  + "): " + formerAdGroupComboScore + " vs (" + cleanAdGroupName + cleanKeyword + "): " + newestAdGroupComboScore + "\n";
+				
 				if(newestAdGroupComboScore > formerAdGroupComboScore)
 				{
 					semanticSimilarity = newestAdGroupComboScore;
 				}else{
 					semanticSimilarity = formerAdGroupComboScore;
-					cleanAdGroupName = adGroupNameForNewKeyword; // just overwriting the variable to use the old ad group from previous loop.
-					selectedKeyword = "Semantic Tie Found! Jaro Winkler implemented...\n" + selectedKeyword;
+					cleanAdGroupName = adGroupNameForNewKeyword; // just overwriting the variable to use the old ad group from previous loop.					
 				}
 			}
 			// --------------------------------------------
@@ -286,7 +289,7 @@ function main()
 			addKeyword(adGroupNameForNewKeyword, keyword);
 			pauseApplyLabelOldKeywordInAdGroup(originalAdGroup, keyword, skipCreateNewLabel);
 		}
-		return selectedKeyword;
+		return outputJaroResult + selectedKeyword;
 	}
 	
 	function addKeyword(adGroupName, keywordName) {
