@@ -6,8 +6,8 @@ var CAMPAIGN_NAME = "Keyword Sorter (BMM)";
 
 // Specify an Ad Group name under the Campaign if specified above.
 // leave empty if you want to run on all Ad Groups under the above specified campaign.
-var SPECIFIC_ADGROUP = "Master Ad Group";
-//var SPECIFIC_ADGROUP = "";
+//var SPECIFIC_ADGROUP = "Master Ad Group";
+var SPECIFIC_ADGROUP = "";
 
 
 
@@ -227,40 +227,63 @@ function main()
 				var adGroupIterator = campaign.adGroups()
 					.withCondition('Name = "'+adGroupName+'"')
 					.get();
-				Logger.log('Processing Ad Group: (' + adGroupName + ') only...\n\n');
-			}
-			else
-			{
-				var adGroupIterator = campaign.adGroups()
-					.withCondition('Name != ""')
-					.get();
-				Logger.log('Processing all Ad Groups under this Campaign...\n\n');
-			}
-				// ----------------------------------------
-			if (adGroupIterator.hasNext())
-			{
-				var adGroup = adGroupIterator.next();
-				var keywordIterator = adGroup.keywords().get();
-				while (keywordIterator.hasNext()) {
-					var keyword = keywordIterator.next();
-					var originalAdGroup = keyword.getAdGroup().getName();
 					
-					// skip checking semantic similarity if keyword and adgroup is a perfect match.
-					if(keyword.getText() == originalAdGroup)
-					{
-						Logger.log("Skip Moving... Keyword: " + keyword.getText() + " and Ad Group: " + originalAdGroup + " is already a perfect match!");
-						continue;
+				Logger.log('Processing Ad Group: (' + adGroupName + ') only...\n\n');
+				
+				if(adGroupIterator.hasNext())
+				{
+					var adGroup = adGroupIterator.next();
+					var keywordIterator = adGroup.keywords().get();
+					while (keywordIterator.hasNext()) {
+						var keyword = keywordIterator.next();
+						var originalAdGroup = keyword.getAdGroup().getName();
+						
+						// skip checking semantic similarity if keyword and adgroup is a perfect match.
+						if(keyword.getText() == originalAdGroup)
+						{
+							Logger.log("Skip Moving... Keyword: " + keyword.getText() + " and Ad Group: " + originalAdGroup + " is already a perfect match!");
+							continue;
+						}
+						else
+						{
+							Logger.log(getAdGroups(keyword.getText(), originalAdGroup));
+						}
 					}
-					else
-					{
-						Logger.log(getAdGroups(keyword.getText(), originalAdGroup));
-					}
+				}
+				else
+				{
+					Logger.log("No Ad Group: " + adGroupName + " found!");
 				}
 			}
 			else
 			{
-				Logger.log("No Ad Group: " + adGroupName + " found!");
+				Logger.log('Processing all Ad Groups under this Campaign...\n\n');
+				
+				var keywordIterator = campaign.keywords().get();
+				if (keywordIterator.hasNext())
+				{
+					while (keywordIterator.hasNext()) {
+						var keyword = keywordIterator.next();
+						var originalAdGroup = keyword.getAdGroup().getName();
+						
+						// skip checking semantic similarity if keyword and adgroup is a perfect match.
+						if(keyword.getText() == originalAdGroup)
+						{
+							Logger.log("Skip Moving... Keyword: " + keyword.getText() + " and Ad Group: " + originalAdGroup + " is already a perfect match!");
+							continue;
+						}
+						else
+						{
+							Logger.log(getAdGroups(keyword.getText(), originalAdGroup));
+						}
+					}
+				}
+				else
+				{
+					Logger.log("No Ad Group: " + adGroupName + " found!");
+				}
 			}
+			
 			//Logger.log('Campaign Name: ' + campaign.getName());
 			//Logger.log('Enabled: ' + campaign.isEnabled());
 			//Logger.log('Bidding strategy: ' + campaign.getBiddingStrategyType());
