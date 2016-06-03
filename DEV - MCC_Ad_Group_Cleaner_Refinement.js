@@ -1,7 +1,13 @@
 var LABEL_NAME = "MOVED STS";
-// use the adgroup name you wish to run the script over with.
-// leave empty if you want to run on all Ad Groups.
+
+// specify a Campaign name for the script to run on.
+// leave empty if you want to run on all Campaigns.
+var CAMPAIGN_NAME = "Keyword Sorter (BMM)";
+
+// Specify an Ad Group name under the Campaign if specified above.
+// leave empty if you want to run on all Ad Groups under the above specified campaign.
 var SPECIFIC_ADGROUP = "Master Ad Group";
+//var SPECIFIC_ADGROUP = "";
 
 
 
@@ -142,8 +148,10 @@ function main()
 	}());
 	// ===============================================================================================
 		
+	
 	// --------------------------------------------------------------
 	// process all keywords from all adGroups.
+	// --------------------------------------------------------------
 	function processCleanerAllAdGroups() {
 		var keywordIterator = AdWordsApp.keywords().get();
 		if (keywordIterator.hasNext()) {
@@ -165,8 +173,10 @@ function main()
 		}
 	}
 	
+	
 	// --------------------------------------------------------------
 	// process all keywords within a specified adGroup only.
+	// --------------------------------------------------------------
 	function processCleanerSpecificAdGroup(AdGroup) {
 		var adGroupName = AdGroup;
 		var adGroupIterator = AdWordsApp.adGroups()
@@ -192,6 +202,80 @@ function main()
 			}
 		}
 	}
+	
+	
+	// --------------------------------------------------------------
+	// process all keywords within a specified adGroup and Campaign.
+	// --------------------------------------------------------------
+	function processCleanerSpecificCampaignAdGroup(campaignName, adGroupName) {
+		var campaignIterator = AdWordsApp.campaigns()
+			.withCondition('Name = "'+campaignName+'"')
+			.get();
+		if (campaignIterator.hasNext())
+		{
+			
+			var campaign = campaignIterator.next();
+			
+			Logger.log('Processing Campaign: ' + campaign.getName() + '...\n\n');
+			
+			// ----------------------------------------
+			// check if specific ad group or all ad groups under the campaign.
+			// include or exclude the .withCondition()
+			var whatAdGroup = adGroupName.length;
+			if(whatAdGroup > 0)
+			{
+				var adGroupIterator = campaign.adGroups()
+					.withCondition('Name = "'+adGroupName+'"')
+					.get();
+				Logger.log('Processing Ad Group: (' + adGroupName + ') only...\n\n');
+			}
+			else
+			{
+				var adGroupIterator = campaign.adGroups()
+					.withCondition('Name != ""')
+					.get();
+				Logger.log('Processing all Ad Groups under this Campaign...\n\n');
+			}
+				// ----------------------------------------
+			if (adGroupIterator.hasNext())
+			{
+				var adGroup = adGroupIterator.next();
+				var keywordIterator = adGroup.keywords().get();
+				while (keywordIterator.hasNext()) {
+					var keyword = keywordIterator.next();
+					var originalAdGroup = keyword.getAdGroup().getName();
+					
+					// skip checking semantic similarity if keyword and adgroup is a perfect match.
+					if(keyword.getText() == originalAdGroup)
+					{
+						Logger.log("Skip Moving... Keyword: " + keyword.getText() + " and Ad Group: " + originalAdGroup + " is already a perfect match!");
+						continue;
+					}
+					else
+					{
+						Logger.log(getAdGroups(keyword.getText(), originalAdGroup));
+					}
+				}
+			}
+			else
+			{
+				Logger.log("No Ad Group: " + adGroupName + " found!");
+			}
+			//Logger.log('Campaign Name: ' + campaign.getName());
+			//Logger.log('Enabled: ' + campaign.isEnabled());
+			//Logger.log('Bidding strategy: ' + campaign.getBiddingStrategyType());
+			//Logger.log('Ad rotation: ' + campaign.getAdRotationType());
+			//Logger.log('Start date: ' + formatDate(campaign.getStartDate()));
+			//Logger.log('End date: ' + formatDate(campaign.getEndDate()));
+		}
+		else
+		{
+			Logger.log("No Campaign: " + campaignName + " found!");
+		}
+	}
+	// --------------------------------------------------------------
+	
+	
 	
 	function getLabelsByName(labelName) {
 		var labelIterator = AdWordsApp.labels()
@@ -357,13 +441,15 @@ function main()
 	
 	
 	// =================================================
-	var n = SPECIFIC_ADGROUP.length;
-	if(n > 0)
-	{
-		processCleanerSpecificAdGroup(SPECIFIC_ADGROUP);		
-	}else{
-		processCleanerAllAdGroups();	
-	}
+	//var n = SPECIFIC_ADGROUP.length;
+	//if(n > 0)
+	//{
+	//	processCleanerSpecificAdGroup(SPECIFIC_ADGROUP);		
+	//}else{
+	//	processCleanerAllAdGroups();	
+	//}
+	
+	processCleanerSpecificCampaignAdGroup(CAMPAIGN_NAME, SPECIFIC_ADGROUP);
 	// =================================================
 	
 } 
