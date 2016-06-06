@@ -242,8 +242,6 @@ function main()
 						var keyword = keywordIterator.next();
 						var originalAdGroup = keyword.getAdGroup().getName();
 						
-						
-						
 						// skip checking semantic similarity if keyword and adgroup is a perfect match.
 						if(keyword.getText() == originalAdGroup)
 						{
@@ -263,39 +261,45 @@ function main()
 			}
 			else
 			{
-				var adGroupIterator = AdWordsApp.adGroups()
-					.withCondition("CampaignName CONTAINS '"+campaignName+"'");
-					.get();
-					
 				Logger.log('Processing All Ad Groups...\n');
+				
+				var adGroupIterator = AdWordsApp.campaigns()
+					.withCondition('Name = "' + campaignName + '"')
+					.get();				
 				
 				if(adGroupIterator.hasNext())
 				{
 					var adGroup = adGroupIterator.next();
-					var originalAdGroup = adGroup.getName();
-					
 					var keywordIterator = adGroup.keywords().get();
 					
-					while (keywordIterator.hasNext())
+					if(keywordIterator.hasNext())
 					{
-						var keyword = keywordIterator.next();
-					  
-						// skip checking semantic similarity if keyword and adgroup is a perfect match.
-						if(keyword.getText() == originalAdGroup)
-						{
-							Logger.log("Skip Moving... Keyword: " + keyword.getText() + " and Ad Group: " + originalAdGroup + " is already a perfect match!");
-							continue;
+						while (keywordIterator.hasNext()) {
+							var keyword = keywordIterator.next();
+							var originalAdGroup = keyword.getAdGroup().getName();
+							
+							// skip checking semantic similarity if keyword and adgroup is a perfect match.
+							if(keyword.getText() == originalAdGroup)
+							{
+								Logger.log("Skip Moving... Keyword: " + keyword.getText() + " and Ad Group: " + originalAdGroup + " is already a perfect match!");
+								continue;
+							}
+							else
+							{
+								Logger.log(getAdGroups(keyword.getText(), originalAdGroup));
+							}
 						}
-						else
-						{
-							Logger.log(getAdGroups(keyword.getText(), originalAdGroup));
-						}
+					}
+					else
+					{
+						Logger.log("No Keywords found!");	
 					}
 				}
 				else
 				{
 					Logger.log("No Ad Group: " + adGroupName + " found!");
 				}
+				
 			}
 		}
 		else
