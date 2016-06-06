@@ -2,7 +2,9 @@ var LABEL_NAME = "MOVED STS";
 
 // specify a Campaign name for the script to run on.
 // leave empty if you want to run on all Campaigns.
-var CAMPAIGN_NAME = "Keyword Sorter (BMM)";
+//var CAMPAIGN_NAME = "Keyword Sorter (BMM)";
+var CAMPAIGN_NAME = "Sample Campaign A";
+//var CAMPAIGN_NAME = ["Sample Campaign A", "Sample Campaign B"];
 
 // Specify an Ad Group name under the Campaign if specified above.
 // leave empty if you want to run on all Ad Groups under the above specified campaign.
@@ -208,27 +210,29 @@ function main()
 	// process all keywords within a specified adGroup and Campaign.
 	// --------------------------------------------------------------
 	function processCleanerSpecificCampaignAdGroup(campaignName, adGroupName) {
+		
 		var campaignIterator = AdWordsApp.campaigns()
-			.withCondition('Name = "'+campaignName+'"')
+			.withCondition('Name = "' + campaignName + '"')
 			.get();
 		if (campaignIterator.hasNext())
 		{
-			
 			var campaign = campaignIterator.next();
 			
-			Logger.log('Processing Campaign: ' + campaign.getName() + '...\n\n');
-			
+			Logger.log('*******************');
+			Logger.log('Processing Campaign: ' + campaign.getName() + '...');
+				
 			// ----------------------------------------
-			// check if specific ad group or all ad groups under the campaign.
-			// include or exclude the .withCondition()
+			// check if to process (a specific ad group) or (all ad groups) under the campaign.
+			// includes or excludes the .withCondition()
 			var whatAdGroup = adGroupName.length;
 			if(whatAdGroup > 0)
 			{
 				var adGroupIterator = campaign.adGroups()
+					.withCondition('CampaignName CONTAINS "'+campaignName+'"')
 					.withCondition('Name = "'+adGroupName+'"')
 					.get();
 					
-				Logger.log('Processing Ad Group: (' + adGroupName + ') only...\n\n');
+				Logger.log('Processing Ad Group: (' + adGroupName + ') only...\n');
 				
 				if(adGroupIterator.hasNext())
 				{
@@ -237,6 +241,8 @@ function main()
 					while (keywordIterator.hasNext()) {
 						var keyword = keywordIterator.next();
 						var originalAdGroup = keyword.getAdGroup().getName();
+						
+						
 						
 						// skip checking semantic similarity if keyword and adgroup is a perfect match.
 						if(keyword.getText() == originalAdGroup)
@@ -257,15 +263,23 @@ function main()
 			}
 			else
 			{
-				Logger.log('Processing all Ad Groups under this Campaign...\n\n');
+				var adGroupIterator = AdWordsApp.adGroups()
+					.withCondition("CampaignName CONTAINS '"+campaignName+"'");
+					.get();
+					
+				Logger.log('Processing All Ad Groups...\n');
 				
-				var keywordIterator = campaign.keywords().get();
-				if (keywordIterator.hasNext())
+				if(adGroupIterator.hasNext())
 				{
-					while (keywordIterator.hasNext()) {
+					var adGroup = adGroupIterator.next();
+					var originalAdGroup = adGroup.getName();
+					
+					var keywordIterator = adGroup.keywords().get();
+					
+					while (keywordIterator.hasNext())
+					{
 						var keyword = keywordIterator.next();
-						var originalAdGroup = keyword.getAdGroup().getName();
-						
+					  
 						// skip checking semantic similarity if keyword and adgroup is a perfect match.
 						if(keyword.getText() == originalAdGroup)
 						{
@@ -283,13 +297,6 @@ function main()
 					Logger.log("No Ad Group: " + adGroupName + " found!");
 				}
 			}
-			
-			//Logger.log('Campaign Name: ' + campaign.getName());
-			//Logger.log('Enabled: ' + campaign.isEnabled());
-			//Logger.log('Bidding strategy: ' + campaign.getBiddingStrategyType());
-			//Logger.log('Ad rotation: ' + campaign.getAdRotationType());
-			//Logger.log('Start date: ' + formatDate(campaign.getStartDate()));
-			//Logger.log('End date: ' + formatDate(campaign.getEndDate()));
 		}
 		else
 		{
@@ -365,21 +372,21 @@ function main()
 			
 			// --------------------------------------------
 			// In case of a semantic score tie, do a jaro winkler comparison.
-			if(semanticSimilarity == keywordScore)
+			/* if(semanticSimilarity == keywordScore)
 			{
 				var formerAdGroupComboScore = calculateMatch.jwDistance(adGroupNameForNewKeyword, cleanKeyword);
 				var newestAdGroupComboScore = calculateMatch.jwDistance(cleanAdGroupName, cleanKeyword);
 				
-				outputJaroResult = "Semantic Tie Found! Jaro Winkler implemented...\n(" + adGroupNameForNewKeyword +", " + cleanKeyword  + "): " + formerAdGroupComboScore + " vs (" + cleanAdGroupName + cleanKeyword + "): " + newestAdGroupComboScore + "\n";
+				outputJaroResult = "Semantic Tie Found! Jaro Winkler implemented...\n(" + adGroupNameForNewKeyword +", " + cleanKeyword  + "): " + formerAdGroupComboScore + " vs (" + cleanAdGroupName +", " + cleanKeyword + "): " + newestAdGroupComboScore + "\n\n";
 				
 				if(newestAdGroupComboScore > formerAdGroupComboScore)
 				{
 					semanticSimilarity = newestAdGroupComboScore;
 				}else{
 					semanticSimilarity = formerAdGroupComboScore;
-					cleanAdGroupName = adGroupNameForNewKeyword; // just overwriting the variable to use the old ad group from previous loop.					
+					cleanAdGroupName = adGroupNameForNewKeyword;					
 				}
-			}
+			} */
 			// --------------------------------------------
 			
 			if(semanticSimilarity > keywordScore)
@@ -464,15 +471,31 @@ function main()
 	
 	
 	// =================================================
-	//var n = SPECIFIC_ADGROUP.length;
-	//if(n > 0)
-	//{
 	//	processCleanerSpecificAdGroup(SPECIFIC_ADGROUP);		
-	//}else{
-	//	processCleanerAllAdGroups();	
-	//}
+	//	processCleanerAllAdGroups();		
 	
-	processCleanerSpecificCampaignAdGroup(CAMPAIGN_NAME, SPECIFIC_ADGROUP);
+	function mainProcessor(campaignName, specificAdGroup)
+	{		
+		if(campaignName.constructor == Array)
+		{
+			Logger.log('==============================================================');
+			Logger.log('Campaigns to be processed: ' + campaignName.join(", "));
+			Logger.log('==============================================================\n');
+			
+			arrayLength = campaignName.length;
+			for (i = 0; i < arrayLength; i++)
+			{
+				processCleanerSpecificCampaignAdGroup(campaignName[i], specificAdGroup);
+			}
+		}
+		else
+		{
+			processCleanerSpecificCampaignAdGroup(campaignName, specificAdGroup);
+		}
+	}
+	
+	
+	mainProcessor(CAMPAIGN_NAME, SPECIFIC_ADGROUP);
 	// =================================================
 	
 } 
