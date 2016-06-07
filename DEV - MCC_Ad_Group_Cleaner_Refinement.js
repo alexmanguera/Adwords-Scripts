@@ -2,8 +2,6 @@ var LABEL_NAME = "MOVED STS";
 
 // specify a Campaign name for the script to run on.
 // leave empty if you want to run on all Campaigns.
-//var CAMPAIGN_NAME = "Keyword Sorter (BMM)";
-var CAMPAIGN_NAME = "Sample Campaign A";
 //var CAMPAIGN_NAME = ["Sample Campaign A", "Sample Campaign B"];
 
 // Specify an Ad Group name under the Campaign if specified above.
@@ -11,6 +9,47 @@ var CAMPAIGN_NAME = "Sample Campaign A";
 //var SPECIFIC_ADGROUP = "Master Ad Group";
 var SPECIFIC_ADGROUP = "";
 
+//--------------------------------------------//
+// Change these to the appropriate google spreadsheet document
+var SPREADSHEET_URL = 'https://docs.google.com/spreadsheets/d/1BXRZjdnMqt9ushaPh34ZkC0KGhfgcF8K6-sCBcsje20/edit#gid=0';
+var SHEET_NAME = 'Sheet1';
+
+var ss = SpreadsheetApp.openByUrl(SPREADSHEET_URL);
+var sheet = ss.getSheetByName(SHEET_NAME);
+
+// Log the last cell with data in it, and its co-ordinates.
+var lastRow = sheet.getLastRow();
+var lastColumn = sheet.getLastColumn();
+var lastCell = sheet.getRange(lastRow, lastColumn);
+//Logger.log('Last cell is at (%s,%s) and has value "%s".', lastRow, lastColumn, lastCell.getValue());
+
+var currDate = getDateString(new Date(),'MM-dd-yyyy');
+  
+// Retrieve the account that has 'Skip' = '0' and store to array
+var CAMPAIGN_NAME = [];
+
+for(var i = 2; i <= lastRow; i++)
+{
+	var ssCampaignName = sheet.getRange(i, 1);
+	var ssCampaignSkip = sheet.getRange(i, 2);
+	var ssCampaignAdGroup = sheet.getRange(i, 3);
+	var ssCampaignLastCompleted = getDateString(new Date(sheet.getRange(i, 5).getValue()),'MM-dd-yyyy');
+	
+	if(ssCampaignSkip.getValue() < '1' && ssCampaignLastCompleted != currDate)
+	{
+		CAMPAIGN_NAME.push(ssCampaignName.getValue());
+	}
+	else
+	{
+		continue; 
+	}
+}
+
+//Helper function to format the date
+function getDateString(date,format) {
+	return Utilities.formatDate(new Date(date),AdWordsApp.currentAccount().getTimeZone(),format); 
+}
+//--------------------------------------------//
 
 
 function main()
@@ -219,20 +258,32 @@ function main()
 			var campaign = campaignIterator.next();
 			
 			Logger.log('*******************');
-			Logger.log('Processing Campaign: ' + campaign.getName() + '...');
-				
+			Logger.log('Processing Campaign: ' + campaignName + '...');
+			
+			// ------------------------------------------------- //		  
+			for(var y = 2; y <= lastRow; y++)
+			{
+				var tempCampaignName = sheet.getRange(y, 1);
+				if(tempCampaignName.getValue() == campaignName)
+				{
+					// set the "Last Started" column
+					sheet.getRange(y, 4).setValue(currDate);
+					var ssSelectedAdGroup = sheet.getRange(y, 3).getValue();
+				}
+			}			 
+			// ------------------------------------------------- //
+
 			// ----------------------------------------
 			// check if to process (a specific ad group) or (all ad groups) under the campaign.
 			// includes or excludes the .withCondition()
-			var whatAdGroup = adGroupName.length;
-			if(whatAdGroup > 0)
+			var whatAdGroup = ssSelectedAdGroup.length;
+			if(whatAdGroup > 0 && ssSelectedAdGroup != "All")
 			{
-				var adGroupIterator = campaign.adGroups()
+				var adGroupIterator = AdWordsApp.adGroups()
 					.withCondition('CampaignName CONTAINS "'+campaignName+'"')
-					.withCondition('Name = "'+adGroupName+'"')
 					.get();
 					
-				Logger.log('Processing Ad Group: (' + adGroupName + ') only...\n');
+				Logger.log('Processing Ad Group: (' + ssSelectedAdGroup + ')...\n');
 				
 				if(adGroupIterator.hasNext())
 				{
@@ -250,56 +301,68 @@ function main()
 						}
 						else
 						{
-							Logger.log(getAdGroups(keyword.getText(), originalAdGroup));
+							Logger.log(getAdGroups(campaignName, keyword.getText(), originalAdGroup, skipAdGroup = false));
 						}
 					}
+					// ------------------------------------------------- //		  
+					for(var y = 2; y <= lastRow; y++)
+					{
+						var tempCampaignName = sheet.getRange(y, 1);
+						if(tempCampaignName.getValue() == campaignName)
+						{
+							// set the "Last Completed" column
+							sheet.getRange(y, 5).setValue(currDate);
+						}
+					}			 
+					// ------------------------------------------------- //
 				}
 				else
 				{
-					Logger.log("No Ad Group: " + adGroupName + " found!");
+					Logger.log("No Ad Group: " + ssSelectedAdGroup + " found!");
 				}
 			}
 			else
 			{
 				Logger.log('Processing All Ad Groups...\n');
-				
-				var adGroupIterator = AdWordsApp.campaigns()
-					.withCondition('Name = "' + campaignName + '"')
-					.get();				
-				
-				if(adGroupIterator.hasNext())
-				{
-					var adGroup = adGroupIterator.next();
-					var keywordIterator = adGroup.keywords().get();
+
+					var keywordIterators = campaign.keywords()
+						.withCondition('CampaignName = "'+campaign.getName()+'"')
+						.get();
 					
-					if(keywordIterator.hasNext())
+					if(keywordIterators.hasNext())
 					{
-						while (keywordIterator.hasNext()) {
-							var keyword = keywordIterator.next();
-							var originalAdGroup = keyword.getAdGroup().getName();
+						while(keywordIterators.hasNext())
+						{
+							var keywords = keywordIterators.next();
+							var originalAdGroup = keywords.getAdGroup().getName();
 							
 							// skip checking semantic similarity if keyword and adgroup is a perfect match.
-							if(keyword.getText() == originalAdGroup)
+							if(keywords.getText() == originalAdGroup)
 							{
-								Logger.log("Skip Moving... Keyword: " + keyword.getText() + " and Ad Group: " + originalAdGroup + " is already a perfect match!");
+								Logger.log("Skip Moving... Keyword: " + keywords.getText() + " and Ad Group: " + originalAdGroup + " is already a perfect match!");
 								continue;
 							}
 							else
 							{
-								Logger.log(getAdGroups(keyword.getText(), originalAdGroup));
+								Logger.log(getAdGroups(campaignName, keywords.getText(), originalAdGroup, skipAdGroup = true));
 							}
 						}
-					}
+						// ------------------------------------------------- //		  
+						for(var y = 2; y <= lastRow; y++)
+						{
+							var tempCampaignName = sheet.getRange(y, 1);
+							if(tempCampaignName.getValue() == campaignName)
+							{
+								// set the "Last Completed" column
+								sheet.getRange(y, 5).setValue(currDate);
+							}
+						}			 
+						// ------------------------------------------------- //
+				}
 					else
 					{
 						Logger.log("No Keywords found!");	
 					}
-				}
-				else
-				{
-					Logger.log("No Ad Group: " + adGroupName + " found!");
-				}
-				
 			}
 		}
 		else
@@ -331,9 +394,23 @@ function main()
 		return result;
 	}
 	
-	function getAdGroups(keyword, originalAdGroup) {
-		var adGroupIterator = AdWordsApp.adGroups().get();
+	function getAdGroups(campaignName, keyword, originalAdGroup, skipAdGroup) {
+		//var adGroupIterator = AdWordsApp.adGroups().get();
+		if(skipAdGroup == false)
+		{
+			var adGroupIterator = AdWordsApp.adGroups()
+								.withCondition('CampaignName CONTAINS "'+campaignName+'"')
+								.withCondition('Name = "'+originalAdGroup+'"')
+								.get();
+		}
+		else
+		{
+			var adGroupIterator = AdWordsApp.adGroups()
+								.withCondition('CampaignName CONTAINS "'+campaignName+'"')
+								.get();
+		}
 		//Logger.log('Total adGroups found : ' + adGroupIterator.totalNumEntities());
+		
 		var selectedKeyword = '';
 		var keywordScore = 0.0;
 		var defaultScore = 0;
@@ -404,14 +481,16 @@ function main()
 		
 		if(addKeywordProcess == true)
 		{
-			addKeyword(adGroupNameForNewKeyword, keyword);
-			pauseApplyLabelOldKeywordInAdGroup(originalAdGroup, keyword, skipCreateNewLabel);
+			addKeyword(campaignName, adGroupName, keyword);
+			pauseApplyLabelOldKeywordInAdGroup(campaignName, originalAdGroup, keyword, skipCreateNewLabel);
 		}
-		return outputJaroResult + selectedKeyword;
+		//return outputJaroResult + selectedKeyword;
+		return selectedKeyword;
 	}
 	
-	function addKeyword(adGroupName, keywordName) {
+	function addKeyword(campaignName, adGroupName, keywordName) {
 		var adGroupIterator = AdWordsApp.adGroups()
+			.withCondition('CampaignName CONTAINS "'+campaignName+'"')
 			.withCondition('Name = "'+adGroupName+'"')
 			.get();
 
@@ -424,8 +503,9 @@ function main()
 		}
 	}
 	
-	function pauseApplyLabelOldKeywordInAdGroup(adGroupName, keywordName, skipCreateNewLabel) {
+	function pauseApplyLabelOldKeywordInAdGroup(campaignName, adGroupName, keywordName, skipCreateNewLabel) {
 		var adGroupIterator = AdWordsApp.adGroups()
+			.withCondition('CampaignName CONTAINS "'+campaignName+'"')
 			.withCondition('Name = "'+adGroupName+'"')
 			.get();
 		if (adGroupIterator.hasNext()) {
