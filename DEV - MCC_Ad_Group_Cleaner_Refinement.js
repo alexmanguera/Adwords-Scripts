@@ -281,6 +281,7 @@ function main()
 			{
 				var adGroupIterator = AdWordsApp.adGroups()
 					.withCondition('CampaignName CONTAINS "'+campaignName+'"')
+					.withCondition("Status = ENABLED")
 					.get();
 					
 				Logger.log('Processing Ad Group: (' + ssSelectedAdGroup + ')...\n');
@@ -327,6 +328,8 @@ function main()
 
 					var keywordIterators = campaign.keywords()
 						.withCondition('CampaignName = "'+campaign.getName()+'"')
+						.withCondition("Status = ENABLED")
+						.withCondition("AdGroupStatus = ENABLED")
 						.get();
 					
 					if(keywordIterators.hasNext())
