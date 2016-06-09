@@ -478,13 +478,13 @@ function main()
 				keywordScore = semanticSimilarity;
 				addKeywordProcess = true;
 				adGroupNameForNewKeyword = cleanAdGroupName;
-				selectedKeyword = '(Winner!)\nMoving keyword to new Ad Group...\nKeyword: ' + cleanKeyword + '\nNew AdGroup: ' + cleanAdGroupName + ' / Original: ' + originalAdGroup + '\nScore: ' + keywordScore + 'Paused this Keyword from Original Ad Group!\n';
+				selectedKeyword = '(Winner!)\nMoving keyword to new Ad Group...\nKeyword: ' + cleanKeyword + '\nNew AdGroup: ' + adGroupNameForNewKeyword + ' / Original: ' + originalAdGroup + '\nScore: ' + keywordScore + 'Paused this Keyword from Original Ad Group!\n';
 			}
 		}
 		
 		if(addKeywordProcess == true)
 		{
-			addKeyword(campaignName, adGroupName, keyword);
+			addKeyword(campaignName, adGroupNameForNewKeyword, cleanKeyword);
 			pauseApplyLabelOldKeywordInAdGroup(campaignName, originalAdGroup, keyword, skipCreateNewLabel);
 		}
 		//return outputJaroResult + selectedKeyword;
