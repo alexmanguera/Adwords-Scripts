@@ -31,5 +31,5 @@ Takes each keyword in an Ad Group, converts it to the campaign match type (exact
 ver 1.1
 
 * Spreadsheet selector in place. 
-* Fixed iterating over enabled Keywords only for the specified campaigns.
-* optimized to minimize runtime by specifying 
+* Fixed to iterate over "Enabled" Keywords only under a specified campaigns.
+* optimized to minimize runtime by specifying
