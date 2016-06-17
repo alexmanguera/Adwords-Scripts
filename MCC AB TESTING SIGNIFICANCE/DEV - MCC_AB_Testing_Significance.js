@@ -75,6 +75,8 @@ var lastCell = sheet.getRange(lastRow, lastColumn);
 //Logger.log('Last cell is at (%s,%s) and has value "%s".', lastRow, lastColumn, lastCell.getValue());
 
 var currDate = getDateString(new Date(),'MM-dd-yyyy');
+
+var createNewLabelCurrDate = false;
   
 // Retrieve the account that has 'Skip' = '0' and store to array
 var accountSkipArray = [];
@@ -184,9 +186,59 @@ function main() {
 		  var todayDate = getDateString(new Date(),'yyyyMMdd');
 		  var touchedAdGroups = [];
 		  var finishedEarly = false;
+		  
+		  // ====================================
+		  var currDateLabel = getDateString(new Date(),'MM-dd-yyyy');
+		  var insertThisLabel = "Last Ran: " + currDateLabel;
+		  // ====================================
+		  
 		  while(agIter.hasNext()) {
 			var ag = agIter.next();
-		 
+			
+			
+			// ================================================================
+			
+			// -------------------------------------
+			var agCurrLabelIter = ag.labels()
+								.withCondition("Name STARTS_WITH 'Last Ran:'")
+								.withCondition("Name = '"+insertThisLabel+"'")
+								.get();
+			if(agCurrLabelIter.hasNext())
+			{
+				Logger.log("+++++++++++++ !!!SKIP THIS AD GROUP (Already Processed)!!! = "+ag.getName()+ " ++++++++++++");
+				continue;
+			}
+			// -------------------------------------
+			
+			var agLabelIter = ag.labels()
+								.withCondition("Name STARTS_WITH 'Last Ran:'")
+								.withCondition("Name != '"+insertThisLabel+"'")
+								.get();
+						
+			while(agLabelIter.hasNext()) 
+			{			  
+			  var agLabel = agLabelIter.next();
+			 
+			 ag.removeLabel(agLabel.getName());
+			  
+			  if(!agLabel.adGroups().get().hasNext())
+			  {
+				//if there are no more entities with that label, delete it.
+				agLabel.remove();
+			  }
+			}
+			if(false == createNewLabelCurrDate)
+			{
+				createNewLabelCurrDate = true;
+				AdWordsApp.createLabel(insertThisLabel);
+				Logger.log("************ NEW CREATED LABEL **************** (" + insertThisLabel + ")");
+			}
+			ag.applyLabel(insertThisLabel);
+			Logger.log("************ LABEL APPLIED TO : " + ag.getName() + " (" + insertThisLabel + ")");
+			
+			// ================================================================
+			
+			
 			var numLoops = (ENABLE_MOBILE_AD_TESTING) ? 2 : 1;
 			for(var loopNum = 0; loopNum < numLoops; loopNum++) {
 			  var isMobile = (loopNum == 1);
