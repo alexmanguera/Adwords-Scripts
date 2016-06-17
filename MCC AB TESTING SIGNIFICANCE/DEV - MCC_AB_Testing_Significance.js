@@ -135,22 +135,24 @@ function main() {
 			var currAccountId = account.getCustomerId();
 			
 			
-			// ------------------------------------------------- //		  
-			for(var y = 2; y <= lastRow; y++)
-			{
-				var tempb_accountName = sheet.getRange(y, 1);
-				if(tempb_accountName.getValue() == currAccountName)
-				{
-					// set the last-start-date column
-					sheet.getRange(y, 4).setValue(currDate);
-				}
-			}			 
-			// ------------------------------------------------- //
+			
 			
   
 			// process the current account if found in the SkipArray[]     
 			if(accountSkipArray.indexOf(currAccountName) == -1) {
 				continue;
+			}else{
+				// ------------------------------------------------- //		  
+				for(var y = 2; y <= lastRow; y++)
+				{
+					var tempb_accountName = sheet.getRange(y, 1);
+					if(tempb_accountName.getValue() == currAccountName)
+					{
+						// set the last-start-date column
+						sheet.getRange(y, 4).setValue(currDate);
+					}
+				}			 
+				// ------------------------------------------------- //
 			}
 			
 			info('Current Account: ' + currAccountName);
@@ -322,20 +324,20 @@ function main() {
 		  
 		  Logger.log('Campaign Finished: ' + currAccountName);
 		  
-
-		}
 		//var results = currAccountName;//result - required by parallel
 		//return JSON.stringify(results);//result - required by parallel
 		  // ------------------------------------------------- //		  
 			for(var x = 2; x <= lastRow; x++) {
 				var temp_accountName = sheet.getRange(x, 1);
 				if(temp_accountName.getValue() == currAccountName) {
+					// set the date for Last Completed column
 					sheet.getRange(x, 5).setValue(currDate);
 				}else{
 					continue; 
 				}
 			}			 
 		  // ------------------------------------------------- //
+		}
 	}
 //}
 
