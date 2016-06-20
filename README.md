@@ -12,6 +12,12 @@ Takes each keyword in an Ad Group, converts it to the campaign match type (exact
 * Via the spreadsheet selector, we are able to run the script multiple times in a day at an interval for it to process only Campaigns that has not completed from the previous run, based on the "Last Started" and "Last Completed" values in the spreadsheet selector.
 
 
+### How do I get set up? ###
+
+* On the Google Spreadsheet Selector, Assign the Campaigns and its Ad Groups Manually.
+* Set Skip value to each Campaign.
+
+
 **Google Spreadsheet Selector Columns**
 
 * ***Campaign Name***
@@ -21,15 +27,62 @@ Takes each keyword in an Ad Group, converts it to the campaign match type (exact
 * ***Last Completed*** (assigns the current date when the Campaign has finished processing)
 
 
-### How do I get set up? ###
-
-* On the Google Spreadsheet Selector, Assign the Campaigns and its Ad Groups Manually.
-* Set Skip value to each Campaign.
-
-
 ### Change Log ###
 ver 1.1
 
 * Spreadsheet selector in place. 
 * Fixed to iterate over "Enabled" Keywords only under a specified campaigns.
 * optimized to minimize runtime by specifying
+
+
+- - - - - - - - - - - - - - - - - - - - - 
+
+
+# MCC A/B Testing Significance #
+
+This script will monitor your AdGroups for creative tests that have hit statistical significance and notify you with an email so that you can take action.
+The script keeps track of changes to any AdGroups so that it always knows when a new test has started without you having to keep track.
+It applies labels to your Ads and then notifies you via email when the tests have completed.
+
+* Improvements made to original script to work in MCC level.
+* Implement feature that allows script to resume from last checked ad groups from previous run (same day).
+
+
+###Functionality / Features ###
+
+* Provides AB Split tests on Ad Groups for each Accounts.
+* Sends out email result after each tests made.
+* Makes use of a Google Spreadsheet as an account selector: https://docs.google.com/spreadsheets/d/1I1TGGHcKFoTDwS0ZywIXCc5QFn7QLq0rVZZbxPz8xNw/edit#gid=0
+
+
+### How do I get set up? ###
+
+* Provide correct email for the script to send reports to.
+* Provide the below requirements:
+//These come from the url when you are logged into AdWords
+//Set these if you want your emails to link directly to the AdGroup:
+(var __c = '2919914748') and (var __u = '8381103468')
+* Assign the Google spreadsheet to use as the Account selector.
+
+
+**Google Spreadsheet Selector Columns**
+
+* ***Account Name***
+* ***Account ID***
+* ***Skip*** (set "0" to skip the Campaign, or "1" to process it) 
+* ***Last Started*** (assigns the current date when the Campaign is being processed)
+* ***Last Completed*** (assigns the current date when the Campaign has finished processing)
+
+### Change Log ###
+ver 2.0
+
+* Allow script to work in MCC level.
+
+ver 2.1
+
+* Use a Google spreadsheet as account selector.
+* Feature that will set when an Account has Last started and Last Completed run.
+
+ver 2.2
+
+* Implement a last checkpoint feature using Labels to processed Ad Groups from the previous run (within the same day).
