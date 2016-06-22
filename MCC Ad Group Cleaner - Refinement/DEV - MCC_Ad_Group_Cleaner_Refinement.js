@@ -437,15 +437,24 @@ function main()
 			var adGroup = adGroupIterator.next();
 			var adGroupName = adGroup.getName();
 			
-			
 			// skip checking Semantic Similarity if Keyword and new Ad Group is a perfect match.
 			// just add the keyword to new ad group and pause from the old ad group.
 			if(adGroupName.toLowerCase() == keyword.toLowerCase())
 			{
-				addKeywordProcess = true;
 				adGroupNameForNewKeyword = adGroupName;
-				selectedKeyword = '(Perfect Match!)\nMoving keyword to new Ad Group...\nKeyword: ' + keyword + '\nAdGroup: ' + adGroupName + ' / Original: ' + originalAdGroup + '\nPaused this Keyword from Original Ad Group!\n';
-				break;
+				// --------------------------------------------
+				// skip if suggested Ad Group (new Ad Group) is the same with  Original Ad Group.
+				if(adGroupNameForNewKeyword == originalAdGroup)
+				{
+					addKeywordProcess = false;
+					selectedKeyword = "Skipping...!\nNew suggested Ad Group (" + adGroupNameForNewKeyword + ") is the same with Original Ad Group (" + originalAdGroup + ").\n";
+					break;
+				}else{
+				// --------------------------------------------
+					addKeywordProcess = true;
+					selectedKeyword = '(Perfect Match!)\nMoving keyword to new Ad Group...\nKeyword: ' + keyword + '\nAdGroup: ' + adGroupName + ' / Original: ' + originalAdGroup + '\nPaused this Keyword from Original Ad Group!\n';
+					break;
+				}
 			}
 			
 			// initiate api call for Semantic Similarity
@@ -456,7 +465,7 @@ function main()
 			
 			// --------------------------------------------
 			// In case of a semantic score tie, do a jaro winkler comparison.
-			/* if(semanticSimilarity == keywordScore)
+			if(semanticSimilarity == keywordScore)
 			{
 				var formerAdGroupComboScore = calculateMatch.jwDistance(adGroupNameForNewKeyword, cleanKeyword);
 				var newestAdGroupComboScore = calculateMatch.jwDistance(cleanAdGroupName, cleanKeyword);
@@ -470,15 +479,25 @@ function main()
 					semanticSimilarity = formerAdGroupComboScore;
 					cleanAdGroupName = adGroupNameForNewKeyword;					
 				}
-			} */
+			}
 			// --------------------------------------------
 			
 			if(semanticSimilarity > keywordScore)
 			{
-				keywordScore = semanticSimilarity;
-				addKeywordProcess = true;
+				keywordScore = semanticSimilarity;	
 				adGroupNameForNewKeyword = cleanAdGroupName;
-				selectedKeyword = '(Winner!)\nMoving keyword to new Ad Group...\nKeyword: ' + cleanKeyword + '\nNew AdGroup: ' + adGroupNameForNewKeyword + ' / Original: ' + originalAdGroup + '\nScore: ' + keywordScore + 'Paused this Keyword from Original Ad Group!\n';
+				// --------------------------------------------
+				// skip if suggested Ad Group (new Ad Group) is the same with  Original Ad Group.
+				if(adGroupNameForNewKeyword == originalAdGroup)
+				{
+					addKeywordProcess = false;
+					selectedKeyword = "Skipping...!\nNew suggested Ad Group (" + adGroupNameForNewKeyword + ") is the same with Original Ad Group (" + originalAdGroup + ").\n";
+					break;
+				}else{
+				// --------------------------------------------
+					addKeywordProcess = true;
+					selectedKeyword = '(Winner!)\nMoving keyword to new Ad Group...\nKeyword: ' + cleanKeyword + '\nNew AdGroup: ' + adGroupNameForNewKeyword + ' / Original: ' + originalAdGroup + '\nScore: ' + keywordScore + 'Paused this Keyword from Original Ad Group!\n';
+				}
 			}
 		}
 		
@@ -565,14 +584,23 @@ function main()
 	{		
 		if(campaignName.constructor == Array)
 		{
-			Logger.log('==============================================================');
-			Logger.log('Campaigns to be processed: ' + campaignName.join(", "));
-			Logger.log('==============================================================\n');
-			
-			arrayLength = campaignName.length;
-			for (i = 0; i < arrayLength; i++)
+			if(campaignName.length > 0)
 			{
-				processCleanerSpecificCampaignAdGroup(campaignName[i], specificAdGroup);
+				Logger.log('==============================================================');
+				Logger.log('Campaigns to be processed: ' + campaignName.join(", "));
+				Logger.log('==============================================================\n');
+				
+				arrayLength = campaignName.length;
+				for (i = 0; i < arrayLength; i++)
+				{
+					processCleanerSpecificCampaignAdGroup(campaignName[i], specificAdGroup);
+				}
+			}
+			else
+			{
+				Logger.log('==============================================================');
+				Logger.log('No Campaigns to process! Stopping the script now...');
+				Logger.log('==============================================================\n');
 			}
 		}
 		else
