@@ -9,6 +9,9 @@ var LABEL_NAME = "MOVED STS";
 //var SPECIFIC_ADGROUP = "Master Ad Group";
 var SPECIFIC_ADGROUP = "";
 
+var MINTHRESHOLDSCORE = "0.85";
+var ADGROUPPLACEHOLDER = "Temp_Storage";
+
 //--------------------------------------------//
 // Change these to the appropriate google spreadsheet document
 var SPREADSHEET_URL = 'https://docs.google.com/spreadsheets/d/1BXRZjdnMqt9ushaPh34ZkC0KGhfgcF8K6-sCBcsje20/edit#gid=0';
@@ -404,12 +407,14 @@ function main()
 			var adGroupIterator = AdWordsApp.adGroups()
 								.withCondition('CampaignName CONTAINS "'+campaignName+'"')
 								.withCondition('Name = "'+originalAdGroup+'"')
+								.withCondition('Name != "'+ADGROUPPLACEHOLDER+'"')
 								.get();
 		}
 		else
 		{
 			var adGroupIterator = AdWordsApp.adGroups()
 								.withCondition('CampaignName CONTAINS "'+campaignName+'"')
+								.withCondition('Name != "'+ADGROUPPLACEHOLDER+'"')
 								.get();
 		}
 		//Logger.log('Total adGroups found : ' + adGroupIterator.totalNumEntities());
@@ -420,6 +425,8 @@ function main()
 		var outputJaroResult = '';
 		addKeywordProcess = false;
 		adGroupNameForNewKeyword = "";
+		var didNotMetMinThreshold = false;
+		var tempStorageForInvalidKeywords = [];
 		
 		// -------------------------------
 		// check to see if label name has already been created.
@@ -446,11 +453,13 @@ function main()
 				// skip if suggested Ad Group (new Ad Group) is the same with  Original Ad Group.
 				if(adGroupNameForNewKeyword == originalAdGroup)
 				{
+					didNotMetMinThreshold = false;
 					addKeywordProcess = false;
 					selectedKeyword = "Skipping...!\nNew suggested Ad Group (" + adGroupNameForNewKeyword + ") is the same with Original Ad Group (" + originalAdGroup + ").\n";
 					break;
 				}else{
 				// --------------------------------------------
+					didNotMetMinThreshold = false;
 					addKeywordProcess = true;
 					selectedKeyword = '(Perfect Match!)\nMoving keyword to new Ad Group...\nKeyword: ' + keyword + '\nAdGroup: ' + adGroupName + ' / Original: ' + originalAdGroup + '\nPaused this Keyword from Original Ad Group!\n';
 					break;
@@ -481,27 +490,51 @@ function main()
 				}
 			}
 			// --------------------------------------------
-			
+				
 			if(semanticSimilarity > keywordScore)
 			{
-				keywordScore = semanticSimilarity;	
-				adGroupNameForNewKeyword = cleanAdGroupName;
 				// --------------------------------------------
-				// skip if suggested Ad Group (new Ad Group) is the same with  Original Ad Group.
-				if(adGroupNameForNewKeyword == originalAdGroup)
+				// this method below will move the keyword to a temp placeholder when STS score is below min. threshold.
+				if(semanticSimilarity < MINTHRESHOLDSCORE)
 				{
+					didNotMetMinThreshold = true;
 					addKeywordProcess = false;
-					selectedKeyword = "Skipping...!\nNew suggested Ad Group (" + adGroupNameForNewKeyword + ") is the same with Original Ad Group (" + originalAdGroup + ").\n";
-					break;
-				}else{
+					//selectedKeyword = "Alert! STS Scores are below Minimum Threshold (" + keywordScore + ") for Keyword: (" + cleanKeyword + ").\n";
+					
+					tempStorageForInvalidKeywords.push(semanticSimilarity);
+					continue;
+				}
 				// --------------------------------------------
-					addKeywordProcess = true;
-					selectedKeyword = '(Winner!)\nMoving keyword to new Ad Group...\nKeyword: ' + cleanKeyword + '\nNew AdGroup: ' + adGroupNameForNewKeyword + ' / Original: ' + originalAdGroup + '\nScore: ' + keywordScore + 'Paused this Keyword from Original Ad Group!\n';
+				else
+				{
+					didNotMetMinThreshold = false;
+					keywordScore = semanticSimilarity;	
+					adGroupNameForNewKeyword = cleanAdGroupName;
+					// --------------------------------------------
+					// skip if suggested Ad Group (new Ad Group) is the same with  Original Ad Group.
+					if(adGroupNameForNewKeyword == originalAdGroup)
+					{
+						addKeywordProcess = false;
+						selectedKeyword = "Skipping...!\nNew suggested Ad Group (" + adGroupNameForNewKeyword + ") is the same with Original Ad Group (" + originalAdGroup + ").\n";
+						break;
+					}else{
+					// --------------------------------------------
+						addKeywordProcess = true;
+						selectedKeyword = '(Winner!)\nMoving keyword to new Ad Group...\nKeyword: ' + cleanKeyword + '\nNew AdGroup: ' + adGroupNameForNewKeyword + ' / Original: ' + originalAdGroup + '\nScore: ' + keywordScore + 'Paused this Keyword from Original Ad Group!\n';
+					}
 				}
 			}
+			
 		}
 		
-		if(addKeywordProcess == true)
+		if(didNotMetMinThreshold == true)
+		{
+			addKeyword(campaignName, ADGROUPPLACEHOLDER, keyword);
+			pauseApplyLabelOldKeywordInAdGroup(campaignName, originalAdGroup, keyword, skipCreateNewLabel);
+			// output all sts scores for this keyword.
+			selectedKeyword = "Keyword: ("+cleanKeyword+") - " + tempStorageForInvalidKeywords.join(", ");
+		}
+		else if(addKeywordProcess == true)
 		{
 			addKeyword(campaignName, adGroupNameForNewKeyword, cleanKeyword);
 			pauseApplyLabelOldKeywordInAdGroup(campaignName, originalAdGroup, keyword, skipCreateNewLabel);
@@ -613,4 +646,4 @@ function main()
 	mainProcessor(CAMPAIGN_NAME, SPECIFIC_ADGROUP);
 	// =================================================
 	
-} 
+}
