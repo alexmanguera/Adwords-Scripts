@@ -8,10 +8,10 @@ var ADGROUPPLACEHOLDER = "Temp_Storage";
 // Change these to the appropriate google spreadsheet document
 
 // PRODUCTION:
-//var SPREADSHEET_URL = 'https://docs.google.com/spreadsheets/d/1Y3Nu1yklOBBA9OIEXxK0UDCkeEhx6V_mG98WpuCLAUc/edit#gid=0';
+var SPREADSHEET_URL = 'https://docs.google.com/spreadsheets/d/1Y3Nu1yklOBBA9OIEXxK0UDCkeEhx6V_mG98WpuCLAUc/edit#gid=0';
 
 // DEVELOPMENT:
-var SPREADSHEET_URL = 'https://docs.google.com/spreadsheets/d/1BXRZjdnMqt9ushaPh34ZkC0KGhfgcF8K6-sCBcsje20/edit#gid=0';
+//var SPREADSHEET_URL = 'https://docs.google.com/spreadsheets/d/1BXRZjdnMqt9ushaPh34ZkC0KGhfgcF8K6-sCBcsje20/edit#gid=0';
 
 var SHEET_NAME = 'Sheet1';
 
