@@ -503,7 +503,6 @@ function main()
 					{
 						didNotMetMinThreshold = true;
 						addKeywordProcess = false;
-						//selectedKeyword = "Alert! STS Scores are below Minimum Threshold (" + keywordScore + ") for Keyword: (" + cleanKeyword + ").\n";
 						
 						tempStorageForInvalidKeywords.push(semanticSimilarity);
 						continue;
@@ -537,7 +536,8 @@ function main()
 			addKeyword(campaignName, ADGROUPPLACEHOLDER, keyword);
 			pauseApplyLabelOldKeywordInAdGroup(campaignName, originalAdGroup, keyword, skipCreateNewLabel);
 			// output all sts scores for this keyword.
-			selectedKeyword = "Keyword: ("+cleanKeyword+") - " + tempStorageForInvalidKeywords.join(", ");
+			//selectedKeyword = "Keyword: ("+keyword+") - " + tempStorageForInvalidKeywords.join(", ");
+			selectedKeyword = "Alert! STS Scores for Keyword: (" + keyword + ") are below Minimum Threshold. Moved to placeholder (" + ADGROUPPLACEHOLDER + ").\n";
 		}
 		else if(addKeywordProcess == true)
 		{
