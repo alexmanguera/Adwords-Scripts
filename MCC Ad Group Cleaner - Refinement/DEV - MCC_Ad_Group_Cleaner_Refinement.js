@@ -252,6 +252,17 @@ function main()
 	// --------------------------------------------------------------
 	function processCleanerSpecificCampaignAdGroup(campaignName, adGroupName) {
 		
+		// ------------------------------------------------- //
+		// check and create the placeholder ad group if not exists.
+		if(MINTHRESHOLDSCORE != "0.0")
+		{
+			if(addAdGroup(campaignName, ADGROUPPLACEHOLDER))
+			{
+				Logger.log("Creating new Ad Group Placeholder (" + ADGROUPPLACEHOLDER + ")...");
+			}
+		}
+		// ------------------------------------------------- //
+		
 		var campaignIterator = AdWordsApp.campaigns()
 			.withCondition('Name = "' + campaignName + '"')
 			.get();
@@ -392,13 +403,17 @@ function main()
 			return false;
 		}
 	}
+	// --------------------------------------------
 	
+	// --------------------------------------------
 	function getExternal(keyworda, keywordb) {
 		var url = "http://swoogle.umbc.edu/StsService/GetStsSim?operation=api&phrase1=" + keyworda + "&phrase2=" + keywordb;
 		var result = UrlFetchApp.fetch(url).getContentText();
 		return result;
 	}
+	// --------------------------------------------
 	
+	// --------------------------------------------
 	function getAdGroups(campaignName, keyword, originalAdGroup, skipAdGroup) {
 		//var adGroupIterator = AdWordsApp.adGroups().get();
 		if(skipAdGroup == false)
@@ -428,6 +443,7 @@ function main()
 		adGroupNameForNewKeyword = "";
 		var didNotMetMinThreshold = false;
 		var tempStorageForInvalidKeywords = [];
+		var selectedAdGroupName = "";
 		
 		// -------------------------------
 		// check to see if label name has already been created.
@@ -466,6 +482,7 @@ function main()
 			{
 				didNotMetMinThreshold = false;
 				addKeywordProcess = true;
+				selectedAdGroupName = cleanAdGroupName;
 				selectedKeyword = '(Perfect Match!)\nMoving keyword to new Ad Group...\nKeyword: ' + keyword + '\nAdGroup: ' + adGroupNameForNewKeyword + ' / Original: ' + originalAdGroup + '\nPaused this Keyword from Original Ad Group!\n';
 				break;
 			}
@@ -497,6 +514,9 @@ function main()
 				// --------------------------------------------
 				if(semanticSimilarity > keywordScore || semanticSimilarity == 1.0)
 				{
+					
+					selectedAdGroupName = cleanAdGroupName;
+					
 					// --------------------------------------------
 					// this method below will move the keyword to a temp placeholder when STS score is below min. threshold.
 					if(semanticSimilarity < MINTHRESHOLDSCORE)
@@ -515,15 +535,15 @@ function main()
 						//adGroupNameForNewKeyword = cleanAdGroupName;
 						// --------------------------------------------
 						// skip if suggested Ad Group (new Ad Group) is the same with  Original Ad Group.
-						if(cleanAdGroupName == originalAdGroup)
+						if(selectedAdGroupName == originalAdGroup)
 						{
 							addKeywordProcess = false;
-							selectedKeyword = "Skipping...!\nKeyword: ("+ keyword +"), New suggested Ad Group (" + cleanAdGroupName + ") is the same with Original Ad Group (" + originalAdGroup + ").\n";
+							selectedKeyword = "Skipping...!\nKeyword: ("+ keyword +"), New suggested Ad Group (" + selectedAdGroupName + ") is the same with Original Ad Group (" + originalAdGroup + ").\n";
 							continue;
 						}else{
 						// --------------------------------------------
 							addKeywordProcess = true;
-							selectedKeyword = '(Winner!)\nMoving keyword to new Ad Group...\nKeyword: ' + keyword + '\nNew AdGroup: ' + cleanAdGroupName + ' / Original: ' + originalAdGroup + '\nScore: ' + keywordScore + 'Paused this Keyword from Original Ad Group!\n';
+							selectedKeyword = '(Winner!)\nMoving keyword to new Ad Group...\nKeyword: ' + keyword + '\nNew AdGroup: ' + selectedAdGroupName + ' / Original: ' + originalAdGroup + '\nScore: ' + keywordScore + 'Paused this Keyword from Original Ad Group!\n';
 						}
 					}
 				}
@@ -541,13 +561,15 @@ function main()
 		}
 		else if(addKeywordProcess == true)
 		{
-			addKeyword(campaignName, cleanAdGroupName, keyword);
+			addKeyword(campaignName, selectedAdGroupName, keyword);
 			pauseApplyLabelOldKeywordInAdGroup(campaignName, originalAdGroup, keyword, skipCreateNewLabel);
 		}
 		//return outputJaroResult + selectedKeyword;
 		return selectedKeyword;
 	}
+	// --------------------------------------------
 	
+	// --------------------------------------------
 	function addKeyword(campaignName, adGroupName, keywordName) {
 		var adGroupIterator = AdWordsApp.adGroups()
 			.withCondition('CampaignName CONTAINS "'+campaignName+'"')
@@ -562,7 +584,33 @@ function main()
 			.build();
 		}
 	}
+	// --------------------------------------------
 	
+	// --------------------------------------------
+	function addAdGroup(campaignName, adGroupName) {
+		var adGroupIterator = AdWordsApp.adGroups()
+			.withCondition('CampaignName CONTAINS "'+campaignName+'"')
+			.withCondition('Name = "'+adGroupName+'"')
+			.get();
+		if (!adGroupIterator.hasNext()) {
+			var campaignIterator = AdWordsApp.campaigns()
+				.withCondition('Name = "'+campaignName+'"')
+				.get();
+			var campaign = campaignIterator.next();
+			var adGroupOperation = campaign.newAdGroupBuilder()
+			.withName(adGroupName)
+			.build();
+			
+			return true;
+		}
+		else
+		{
+			return false;
+		}
+	}
+	// --------------------------------------------
+	
+	// --------------------------------------------
 	function pauseApplyLabelOldKeywordInAdGroup(campaignName, adGroupName, keywordName, skipCreateNewLabel) {
 		var adGroupIterator = AdWordsApp.adGroups()
 			.withCondition('CampaignName CONTAINS "'+campaignName+'"')
@@ -586,8 +634,9 @@ function main()
 			}
 		}
 	}
+	// --------------------------------------------
 	
-	// --------------------------------------------------------------------
+	// --------------------------------------------
 	function removeSpecialChars(text) {
 		if(text) {
 			var lower = text.toLowerCase();
@@ -602,7 +651,9 @@ function main()
 		}
 		return '';
 	}
+	// --------------------------------------------
 	
+	// --------------------------------------------
 	//return true if char is a number
 	function isNumber(text) {
 		reg = new RegExp('[0-9]+$');
@@ -611,7 +662,7 @@ function main()
 		}
 		return false;
 	}
-	// --------------------------------------------------------------------
+	// --------------------------------------------
 	
 	
 	// =================================================
