@@ -10,13 +10,13 @@ Takes each keyword in an Ad Group, converts it to the campaign match type (exact
 * "Pauses" the old keyword from the original Ad Group if new Ad Group is assigned. Then assigns a Label (MOVED STS) on the old keyword.
 * Script uses a Google spreadsheet selector to manage Campaigns and Ad Groups: https://docs.google.com/spreadsheets/d/1BXRZjdnMqt9ushaPh34ZkC0KGhfgcF8K6-sCBcsje20/edit#gid=0
 * Via the spreadsheet selector, we are able to run the script multiple times in a day at an interval for it to process only Campaigns that has not completed from the previous run, based on the "Last Started" and "Last Completed" values in the spreadsheet selector.
-
+* Move irrelevant keywords (low STS scores that does not meet specified threhold) to an Ad Group placeholder.
 
 ### How do I get set up? ###
 
 * On the Google Spreadsheet Selector, Assign the Campaigns and its Ad Groups Manually.
 * Set Skip value to each Campaign.
-
+* Set the Threshold within the script to "0.0" to disable Threshold feature (moving of keywords to a placeholder).
 
 **Google Spreadsheet Selector Columns**
 
@@ -32,9 +32,12 @@ ver 1.1
 
 * Spreadsheet selector in place. 
 * Fixed to iterate over "Enabled" Keywords only under a specified campaigns.
-* optimized to minimize runtime by specifying
+* optimized to minimize runtime by specifying additional filters when querying.
 
+ver 1.2
 
+* Ability to move irrelevant (low STS keywords that does not meet threshold) to an Ad Group Placeholder.
+* Creates the Ad Group placeholder if it does not exists.
 - - - - - - - - - - - - - - - - - - - - - 
 
 
