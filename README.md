@@ -1,3 +1,17 @@
+# Bid Adjustment #
+
+### Functionality / Features ###
+
+### How do I get set up? ###
+- Initially had it setup with TARGET_CPA = 30 and MAX_CPC = 10.
+
+### Change Log ###
+ver 1.0
+
+* All results can only be seen within the log.
+
+- - - - - - - - - - - - - - - - - - - - - 
+
 # MCC Ad Group Cleaner - Refinement #
 
 Takes each keyword in an Ad Group, converts it to the campaign match type (exact or BMM), and then compares its context against the name of each ad group in the campaign. At this point it scores itself by similarity to the ad group name, and then moves itself into the most relevant ad group name within the campaign.
@@ -38,6 +52,8 @@ ver 1.2
 
 * Ability to move irrelevant (low STS keywords that does not meet threshold) to an Ad Group Placeholder.
 * Creates the Ad Group placeholder if it does not exists.
+
+
 - - - - - - - - - - - - - - - - - - - - - 
 
 
