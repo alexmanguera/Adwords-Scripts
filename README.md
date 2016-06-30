@@ -3,7 +3,8 @@
 ### Functionality / Features ###
 
 ### How do I get set up? ###
-- Initially had it setup with TARGET_CPA = 30 and MAX_CPC = 10.
+- Initially had it setup with TARGET_CPA = 30.
+- Specify a Campaign to process with.
 
 ### Change Log ###
 ver 1.0
