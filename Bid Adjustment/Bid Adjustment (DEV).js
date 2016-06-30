@@ -102,19 +102,19 @@ function main()
 					// --------------------------
 					// 7 Days - Cost / Conversion AND Bid result
 					var a_cost_over_conversion = getCostOverConversion(a_cost, a_convertedclicks);
-					var a_bid_result = getBidResult(TARGET_CPA, a_cost_over_conversion, MAX_CPC);
+					var a_bid_result = getBidResult(TARGET_CPA, a_cost_over_conversion, a_averagecpc);
 					
 					// 14 Days - Cost / Conversion AND Bid result
 					var b_cost_over_conversion = getCostOverConversion(b_cost, b_convertedclicks);
-					var b_bid_result = getBidResult(TARGET_CPA, b_cost_over_conversion, MAX_CPC);
+					var b_bid_result = getBidResult(TARGET_CPA, b_cost_over_conversion, b_averagecpc);
 					
 					// 30 Days - Cost / Conversion AND Bid result
 					var c_cost_over_conversion = getCostOverConversion(c_cost, c_convertedclicks);
-					var c_bid_result = getBidResult(TARGET_CPA, c_cost_over_conversion, MAX_CPC);
+					var c_bid_result = getBidResult(TARGET_CPA, c_cost_over_conversion, c_averagecpc);
 					
 					// All Time - Cost / Conversion AND Bid result
 					var d_cost_over_conversion = getCostOverConversion(d_cost, d_convertedclicks);
-					var d_bid_result = getBidResult(TARGET_CPA, d_cost_over_conversion, MAX_CPC);
+					var d_bid_result = getBidResult(TARGET_CPA, d_cost_over_conversion, d_averagecpc);
 					// --------------------------
 					
 					var bid_array = [a_bid_result, b_bid_result, c_bid_result, d_bid_result];
@@ -143,13 +143,13 @@ function main()
 	
 	// ------------------------------------
 	// get the Bid result.
-	function getBidResult(TARGET_CPA, cost_over_conversion, MAX_CPC) {
+	function getBidResult(TARGET_CPA, cost_over_conversion, averagecpc) {
 		
 		var output = 0;
 		if(cost_over_conversion != 0)
 		{
 			output = TARGET_CPA / cost_over_conversion;
-			output = output * MAX_CPC;
+			output = output * averagecpc;
 		}
 		output = output.toFixed(2);
 		return output;
