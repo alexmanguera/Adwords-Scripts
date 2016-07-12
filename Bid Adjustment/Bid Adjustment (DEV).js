@@ -1,5 +1,5 @@
 var TARGET_CPA = 30;
-var MAX_CPC = 10;
+var UPPER_BID_LIMIT = 10;
 //var CAMPAIGN_NAME = "AU - Villa Botanica";
 var CAMPAIGN_NAME = "AU - Bali Wedding (BMM)";
 
@@ -16,7 +16,7 @@ function main()
 		{
 			Logger.log("===================================");
 			Logger.log("Campaign Name: " + campaignName);
-			Logger.log("Max CPC: " + MAX_CPC);
+			Logger.log("Upper Bid Limit: " + UPPER_BID_LIMIT);
 			Logger.log("Target CPA: " + TARGET_CPA);
 			Logger.log("===================================");
 			Logger.log("\n");
@@ -121,8 +121,20 @@ function main()
 					
 					var new_bid = getNewBid(bid_array);
 					
+					// Set the new Bid for this Keyword.
+					if(new_bid < UPPER_BID_LIMIT && new_bid < TARGET_CPA && new_bid > 0)
+					{
+						keywords.setMaxCpc(new_bid);
+					}
+					else
+					{
+						Logger.log("Skipping!... New Bid is either 0, above Bid Limit and/or Target CPA.");
+					}
+					
 					Logger.log(keyword + "\n:: 7 Day Bid = " + a_bid_result + " | 14 Day Bid = " + b_bid_result + " | 30 Day Bid = " + c_bid_result + " | All Time = " + d_bid_result + " | **New Bid = " + new_bid);
 					Logger.log("\n");
+					
+
 				}
 			}
 		}
