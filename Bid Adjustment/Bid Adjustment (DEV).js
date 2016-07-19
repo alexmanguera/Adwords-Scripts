@@ -1,6 +1,5 @@
-var TARGET_CPA = 30;
+var TARGET_CPA = 35;
 var UPPER_BID_LIMIT = 10;
-//var CAMPAIGN_NAME = "AU - Villa Botanica";
 var CAMPAIGN_NAME = "AU - Bali Wedding (BMM)";
 
 function main()
@@ -121,8 +120,14 @@ function main()
 					
 					var new_bid = getNewBid(bid_array);
 					
+					// use upper-bid-limit value if new-bid is greater than upper-bid-limit.
+					if(new_bid > UPPER_BID_LIMIT)
+					{
+						new_bid = UPPER_BID_LIMIT;
+					}
+					
 					// Set the new Bid for this Keyword.
-					if(new_bid < UPPER_BID_LIMIT && new_bid < TARGET_CPA && new_bid > 0)
+					if(new_bid <= UPPER_BID_LIMIT && new_bid <= TARGET_CPA && new_bid > 0)
 					{
 						keywords.setMaxCpc(new_bid);
 					}
