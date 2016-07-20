@@ -4,7 +4,7 @@
 
 ### How do I get set up? ###
 - Set constant values for both TARGET_CPA and UPPER_BID_LIMIT.
-- Specify a Campaign to process with.
+- Specify a single or multiple Campaign to process.
 
 ### Change Log ###
 ver 1.0
@@ -14,6 +14,10 @@ ver 1.0
 ver 1.1
  
 * Apply value of upper-bid-limit (Max CPC) if new-bid is greater than upper-bid-limit.
+
+ver 1.2
+
+* Make use of array for Campaigns to allow processing of multiple Campaigns.
 
 - - - - - - - - - - - - - - - - - - - - - 
 
