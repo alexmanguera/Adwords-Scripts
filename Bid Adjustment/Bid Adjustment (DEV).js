@@ -62,6 +62,7 @@ function main()
 						
 						var keyword = keywords.getText();
 						var AdGroup = keywords.getAdGroup().getName();
+						var currentCPC = keywords.bidding().getCpc();
 						
 						var stats_seven_days = keywords.getStatsFor('LAST_7_DAYS');
 						var stats_fourteen_days = keywords.getStatsFor('LAST_14_DAYS');
@@ -178,7 +179,7 @@ function main()
 							keywords.setMaxCpc(new_bid);
 						}
 						
-						Logger.log(keyword + "\n:: 7 Day Bid = " + a_bid_result + " | 14 Day Bid = " + b_bid_result + " | 30 Day Bid = " + c_bid_result + " | All Time = " + d_bid_result + " | **New Bid = " + new_bid);
+					Logger.log(keyword + "\n:: 7 Day Bid = " + a_bid_result + " | 14 Day Bid = " + b_bid_result + " | 30 Day Bid = " + c_bid_result + " | All Time = " + d_bid_result + " | [Current Bid = "+ currentCPC +" **New Bid = " + new_bid + "]");
 						Logger.log("\n");
 						
 					}
