@@ -3,13 +3,17 @@
 ### Functionality / Features ###
 
 ### How do I get set up? ###
-- Initially had it setup with TARGET_CPA = 30.
+- Set constant values for both TARGET_CPA and UPPER_BID_LIMIT.
 - Specify a Campaign to process with.
 
 ### Change Log ###
 ver 1.0
 
 * All results can only be seen within the log.
+
+ver 1.1
+ 
+* Apply value of upper-bid-limit (Max CPC) if new-bid is greater than upper-bid-limit.
 
 - - - - - - - - - - - - - - - - - - - - - 
 
