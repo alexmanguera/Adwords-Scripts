@@ -1,8 +1,35 @@
+# MCC Ad Checker #
+
+### Functionality / Features ###
+
+ A google script that checks that active adgroups within active campaigns have 2 live ads present, other wise a notification is sent to designated email as an alert.
+
+This alert will state the account name, as well as the campaign/adgroups that do not meet this requirement. 
+
+### How do I get set up? ###
+
+* Provide an email recipient for the report.
+***var EMAIL***
+
+* supply a manager-account-id if you want to process all accounts under a manager-account.If this is not empty, manager-account will be used instead of specific client-accounts.
+***var MANAGER_ACCOUNT***
+
+* Supply client-ids for all client-account that you want to process if manager-account is not specified.
+***var CLIENT_ACCOUNTS***
+
+### Change Log ###
+ver 1.0
+
+* Works for MCC Accounts
+
+- - - - - - - - - - - - - - - - - - - - - 
+
 # Bid Adjustment #
 
 ### Functionality / Features ###
 
 ### How do I get set up? ###
+
 - Set constant values for both TARGET_CPA and UPPER_BID_LIMIT.
 - Specify a single or multiple Campaign to process.
 
