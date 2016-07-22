@@ -28,6 +28,8 @@ ver 1.0
 
 ### Functionality / Features ###
 
+Multi-Campaign capable.
+
 ### How do I get set up? ###
 
 - Set constant values for both TARGET_CPA and UPPER_BID_LIMIT.
@@ -45,6 +47,11 @@ ver 1.1
 ver 1.2
 
 * Make use of array for Campaigns to allow processing of multiple Campaigns.
+
+ver 1.3
+
+* Allows to Compute for New Bid based on either ROAS method or conventional method.
+* Select a method via the constant "var SELECTED_BID_METHOD".
 
 - - - - - - - - - - - - - - - - - - - - - 
 
