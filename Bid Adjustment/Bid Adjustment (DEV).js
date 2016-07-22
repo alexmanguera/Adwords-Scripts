@@ -63,7 +63,7 @@ function main()
 				}else{
 					dispMethod = "Conventional."
 				}
-				
+					
 				Logger.log("===================================");
 				Logger.log("Selected Method: " + dispMethod);
 				Logger.log("Campaign Name: " + campaign.getName());
@@ -270,12 +270,6 @@ function main()
 							validNewBid = true;
 						}
 						
-						// check to set maxCPC with new bid
-						if(validNewBid)
-						{
-							keywords.setMaxCpc(finalOutputNewBid);
-						}
-						
 						
 						// ------------------------------------------------------------
 						// Display Log
@@ -304,6 +298,19 @@ function main()
 						}
 						Logger.log("\n");
 						// ------------------------------------------------------------
+						
+						
+						// check to set maxCPC with new bid
+						if(validNewBid)
+						{
+							if(typeof finalOutputNewBid != "undefined")
+							{
+								if(isNaN(finalOutputNewBid) == false)
+								{
+									keywords.setMaxCpc(finalOutputNewBid);
+								}
+							}
+						}
 						
 					} // end while
 				}
