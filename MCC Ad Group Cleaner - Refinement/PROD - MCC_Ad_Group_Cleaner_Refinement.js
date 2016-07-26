@@ -1,7 +1,25 @@
-var LABEL_NAME = "MOVED STS";
-var SPECIFIC_ADGROUP = "";
+/**************
 
-var MINTHRESHOLDSCORE = "0.0";
+====================
+Ad Group Refiner/Cleaner
+Current Version: 1.2
+====================
+
+Change Log:
+ver 1.1
+- Spreadsheet selector in place.
+- Fixed to iterate over "Enabled" Keywords only under a specified campaigns.
+- optimized to minimize runtime by specifying additional filters when querying.
+ver 1.2
+- Ability to move irrelevant (low STS keywords that does not meet threshold) to an Ad Group Placeholder.
+- Creates the Ad Group placeholder if it does not exists.
+
+**************/
+
+var LABEL_NAME = "MOVED STS";
+
+// set minthresholdscore to "0" to disable it.
+var MINTHRESHOLDSCORE = "0.8";
 var ADGROUPPLACEHOLDER = "Temp_Storage";
 
 //--------------------------------------------//
@@ -191,66 +209,10 @@ function main()
 	}());
 	// ===============================================================================================
 		
-	
-	// --------------------------------------------------------------
-	// process all keywords from all adGroups.
-	// --------------------------------------------------------------
-	function processCleanerAllAdGroups() {
-		var keywordIterator = AdWordsApp.keywords().get();
-		if (keywordIterator.hasNext()) {
-			while (keywordIterator.hasNext()) {
-				var keyword = keywordIterator.next();
-				var originalAdGroup = keyword.getAdGroup().getName();
-				
-				// skip checking semantic similarity if keyword and adgroup is a perfect match.
-				if(keyword.getText() == originalAdGroup)
-				{
-					Logger.log("Skip Moving... Keyword: " + keyword.getText() + " and Ad Group: " + originalAdGroup + " is already a perfect match!");
-					continue;
-				}
-				else
-				{
-					Logger.log(getAdGroups(keyword.getText(), originalAdGroup));
-				}
-			}
-		}
-	}
-	
-	
-	// --------------------------------------------------------------
-	// process all keywords within a specified adGroup only.
-	// --------------------------------------------------------------
-	function processCleanerSpecificAdGroup(AdGroup) {
-		var adGroupName = AdGroup;
-		var adGroupIterator = AdWordsApp.adGroups()
-			.withCondition('Name = "'+adGroupName+'"')
-			.get();
-		if (adGroupIterator.hasNext()) {
-			var adGroup = adGroupIterator.next();
-			var keywordIterator = adGroup.keywords().get();
-			while (keywordIterator.hasNext()) {
-				var keyword = keywordIterator.next();
-				var originalAdGroup = keyword.getAdGroup().getName();
-				
-				// skip checking semantic similarity if keyword and adgroup is a perfect match.
-				if(keyword.getText() == originalAdGroup)
-				{
-					Logger.log("Skip Moving... Keyword: " + keyword.getText() + " and Ad Group: " + originalAdGroup + " is already a perfect match!");
-					continue;
-				}
-				else
-				{
-					Logger.log(getAdGroups(keyword.getText(), originalAdGroup));
-				}
-			}
-		}
-	}
-	
-	
 	// --------------------------------------------------------------
 	// process all keywords within a specified adGroup and Campaign.
 	// --------------------------------------------------------------
-	function processCleanerSpecificCampaignAdGroup(campaignName, adGroupName) {
+	function processCleanerSpecificCampaignAdGroup(campaignName) {
 		
 		// ------------------------------------------------- //
 		// check and create the placeholder ad group if not exists.
@@ -290,20 +252,45 @@ function main()
 			// check if to process (a specific ad group) or (all ad groups) under the campaign.
 			// includes or excludes the .withCondition()
 			var whatAdGroup = ssSelectedAdGroup.length;
-			if(whatAdGroup > 0 && ssSelectedAdGroup != "All")
+			if(ssSelectedAdGroup != "All")
 			{
-				var adGroupIterator = AdWordsApp.adGroups()
-					.withCondition('CampaignName CONTAINS "'+campaignName+'"')
+				var adGroupIterator = campaign.adGroups()
+					.withCondition('Name = "'+ssSelectedAdGroup+'"')
 					.withCondition("Status = ENABLED")
 					.get();
-					
-				Logger.log('Processing Ad Group: (' + ssSelectedAdGroup + ')...\n');
 				
-				if(adGroupIterator.hasNext())
+				var skipAdGroupValue = false;
+				
+				Logger.log('Processing Ad Group: (' + ssSelectedAdGroup + ')...\n');
+				//Logger.log('X Total adGroups found : ' + adGroupIterator.totalNumEntities());
+			}
+			else
+			{
+				var adGroupIterator = campaign.adGroups()
+					.withCondition("Status = ENABLED")
+					.get();
+				
+				var skipAdGroupValue = true;
+				
+				Logger.log('Processing All Ad Groups...');
+				//Logger.log('Y Total adGroups found : ' + adGroupIterator.totalNumEntities());
+			}
+				
+				
+			if(adGroupIterator.hasNext())
+			{
+				var adGroup = adGroupIterator.next();
+				var keywordIterator = campaign.keywords()
+					.withCondition("Status = ENABLED")
+					.withCondition("AdGroupStatus = ENABLED")
+					.get();
+				
+				//Logger.log('Total Keywords found : ' + keywordIterator.totalNumEntities());
+				
+				if(keywordIterator.hasNext())
 				{
-					var adGroup = adGroupIterator.next();
-					var keywordIterator = adGroup.keywords().get();
-					while (keywordIterator.hasNext()) {
+					while(keywordIterator.hasNext())
+					{
 						var keyword = keywordIterator.next();
 						var originalAdGroup = keyword.getAdGroup().getName();
 						
@@ -315,7 +302,7 @@ function main()
 						}
 						else
 						{
-							Logger.log(getAdGroups(campaignName, keyword.getText(), originalAdGroup, skipAdGroup = false));
+							Logger.log(getAdGroups(campaignName, keyword.getText(), originalAdGroup, skipAdGroupValue));
 						}
 					}
 					// ------------------------------------------------- //		  
@@ -332,53 +319,12 @@ function main()
 				}
 				else
 				{
-					Logger.log("No Ad Group: " + ssSelectedAdGroup + " found!");
+					Logger.log("No Keywords found!");	
 				}
 			}
 			else
 			{
-				Logger.log('Processing All Ad Groups...\n');
-
-					var keywordIterators = campaign.keywords()
-						.withCondition('CampaignName = "'+campaign.getName()+'"')
-						.withCondition("Status = ENABLED")
-						.withCondition("AdGroupStatus = ENABLED")
-						.get();
-					
-					if(keywordIterators.hasNext())
-					{
-						while(keywordIterators.hasNext())
-						{
-							var keywords = keywordIterators.next();
-							var originalAdGroup = keywords.getAdGroup().getName();
-							
-							// skip checking semantic similarity if keyword and adgroup is a perfect match.
-							if(keywords.getText() == originalAdGroup)
-							{
-								Logger.log("Skip Moving... Keyword: " + keywords.getText() + " and Ad Group: " + originalAdGroup + " is already a perfect match!");
-								continue;
-							}
-							else
-							{
-								Logger.log(getAdGroups(campaignName, keywords.getText(), originalAdGroup, skipAdGroup = true));
-							}
-						}
-						// ------------------------------------------------- //		  
-						for(var y = 2; y <= lastRow; y++)
-						{
-							var tempCampaignName = sheet.getRange(y, 1);
-							if(tempCampaignName.getValue() == campaignName)
-							{
-								// set the "Last Completed" column
-								sheet.getRange(y, 5).setValue(currDate);
-							}
-						}			 
-						// ------------------------------------------------- //
-				}
-					else
-					{
-						Logger.log("No Keywords found!");	
-					}
+				Logger.log("No Ad Group: " + ssSelectedAdGroup + " found!");
 			}
 		}
 		else
@@ -416,23 +362,12 @@ function main()
 	// --------------------------------------------
 	function getAdGroups(campaignName, keyword, originalAdGroup, skipAdGroup) {
 		//var adGroupIterator = AdWordsApp.adGroups().get();
-		if(skipAdGroup == false)
-		{
-			var adGroupIterator = AdWordsApp.adGroups()
-								.withCondition('CampaignName CONTAINS "'+campaignName+'"')
-								.withCondition('Name = "'+originalAdGroup+'"')
-								.withCondition('Name != "'+ADGROUPPLACEHOLDER+'"')
-								.withCondition("Status = ENABLED")
-								.get();
-		}
-		else
-		{
-			var adGroupIterator = AdWordsApp.adGroups()
-								.withCondition('CampaignName CONTAINS "'+campaignName+'"')
-								.withCondition('Name != "'+ADGROUPPLACEHOLDER+'"')
-								.withCondition("Status = ENABLED")
-								.get();
-		}
+		var adGroupIterator = AdWordsApp.adGroups()
+							.withCondition('CampaignName CONTAINS "'+campaignName+'"')
+							.withCondition('Name != "'+ADGROUPPLACEHOLDER+'"')
+							.withCondition("Status = ENABLED")
+							.get();
+		
 		//Logger.log('Total adGroups found : ' + adGroupIterator.totalNumEntities());
 		
 		var selectedKeyword = '';
@@ -557,7 +492,7 @@ function main()
 			pauseApplyLabelOldKeywordInAdGroup(campaignName, originalAdGroup, keyword, skipCreateNewLabel);
 			// output all sts scores for this keyword.
 			//selectedKeyword = "Keyword: ("+keyword+") - " + tempStorageForInvalidKeywords.join(", ");
-			selectedKeyword = "Alert! STS Scores for Keyword: (" + keyword + ") are below Minimum Threshold. Moved to placeholder (" + ADGROUPPLACEHOLDER + ").\n";
+			selectedKeyword = "Alert! STS Score for Keyword: (" + keyword + ") is below Minimum Threshold. Moved to placeholder:" + ADGROUPPLACEHOLDER + ".\n";
 		}
 		else if(addKeywordProcess == true)
 		{
@@ -666,10 +601,7 @@ function main()
 	
 	
 	// =================================================
-	//	processCleanerSpecificAdGroup(SPECIFIC_ADGROUP);		
-	//	processCleanerAllAdGroups();		
-	
-	function mainProcessor(campaignName, specificAdGroup)
+	function mainProcessor(campaignName)
 	{		
 		if(campaignName.constructor == Array)
 		{
@@ -682,7 +614,7 @@ function main()
 				arrayLength = campaignName.length;
 				for (i = 0; i < arrayLength; i++)
 				{
-					processCleanerSpecificCampaignAdGroup(campaignName[i], specificAdGroup);
+					processCleanerSpecificCampaignAdGroup(campaignName[i]);
 				}
 			}
 			else
@@ -694,12 +626,11 @@ function main()
 		}
 		else
 		{
-			processCleanerSpecificCampaignAdGroup(campaignName, specificAdGroup);
+			processCleanerSpecificCampaignAdGroup(campaignName);
 		}
 	}
 	
-	
-	mainProcessor(CAMPAIGN_NAME, SPECIFIC_ADGROUP);
+	mainProcessor(CAMPAIGN_NAME);
 	// =================================================
 	
 } 
