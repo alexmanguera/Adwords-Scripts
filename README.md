@@ -96,7 +96,9 @@ ver 1.2
 * Ability to move irrelevant (low STS keywords that does not meet threshold) to an Ad Group Placeholder.
 * Creates the Ad Group placeholder if it does not exists.
 
+ver 1.3
 
+* Ability to Skip certain Ad Groups/Campaigns that are assigned with the label "STS_SKIP".
 - - - - - - - - - - - - - - - - - - - - - 
 
 
