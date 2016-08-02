@@ -28,10 +28,10 @@ var ADGROUPPLACEHOLDER = "Temp_Storage";
 // Change these to the appropriate google spreadsheet document
 
 // PRODUCTION:
-//var SPREADSHEET_URL = 'https://docs.google.com/spreadsheets/d/1Y3Nu1yklOBBA9OIEXxK0UDCkeEhx6V_mG98WpuCLAUc/edit#gid=0';
+var SPREADSHEET_URL = 'https://docs.google.com/spreadsheets/d/10raJpYF-FJ120iiModiCKwC1UAkhWURSKCo20ONL_pM/edit#gid=0';
 
 // DEVELOPMENT:
-var SPREADSHEET_URL = 'https://docs.google.com/spreadsheets/d/1BXRZjdnMqt9ushaPh34ZkC0KGhfgcF8K6-sCBcsje20/edit#gid=0';
+//var SPREADSHEET_URL = 'https://docs.google.com/spreadsheets/d/1BXRZjdnMqt9ushaPh34ZkC0KGhfgcF8K6-sCBcsje20/edit#gid=0';
 
 var SHEET_NAME = 'Sheet1';
 
@@ -226,6 +226,14 @@ function main()
 			}
 		}
 		// ------------------------------------------------- //
+		// check to see if label name has already been created.
+		// LABEL_SKIP
+		if(getLabelsByName(LABEL_SKIP) == false)
+		{
+			Logger.log("Label (" + ADGROUPPLACEHOLDER + ") does not exist. Creating this Label once...");
+			AdWordsApp.createLabel(LABEL_SKIP);
+		}
+		// ------------------------------------------------- //
 		
 		var campaignIterator = AdWordsApp.campaigns()
 			.withCondition('Name = "' + campaignName + '"')
@@ -368,17 +376,6 @@ function main()
 									Logger.log(getAdGroups(campaignName, keyword.getText(), originalAdGroup, skipAdGroupValue));
 								}
 							}
-							// ------------------------------------------------- //		  
-							for(var y = 2; y <= lastRow; y++)
-							{
-								var tempCampaignName = sheet.getRange(y, 1);
-								if(tempCampaignName.getValue() == campaignName)
-								{
-									// set the "Last Completed" column
-									sheet.getRange(y, 5).setValue(currDate);
-								}
-							}			 
-							// ------------------------------------------------- //
 						}
 						else
 						{
@@ -393,7 +390,18 @@ function main()
 				{
 					Logger.log("No available Ad Group found: " + ssSelectedAdGroup);
 				}
-			}			
+			}
+			// ------------------------------------------------- //		  
+			for(var y = 2; y <= lastRow; y++)
+			{
+				var tempCampaignName = sheet.getRange(y, 1);
+				if(tempCampaignName.getValue() == campaignName)
+				{
+					// set the "Last Completed" column
+					sheet.getRange(y, 5).setValue(currDate);
+				}
+			}			 
+			// ------------------------------------------------- //
 		}
 		else
 		{
@@ -451,6 +459,7 @@ function main()
 		
 		// -------------------------------
 		// check to see if label name has already been created.
+		// LABEL_NAME
 		if(getLabelsByName(LABEL_NAME))
 		{
 			var skipCreateNewLabel = true;
@@ -622,8 +631,20 @@ function main()
 			.get();
 		if (adGroupIterator.hasNext()) {
 			var adGroup = adGroupIterator.next();
-			var keywordIterator = adGroup.keywords()
-			.withCondition('Text = "'+keywordName+'"').get();
+
+			if(keywordName.indexOf('"') != -1)
+			{
+				var keywordIterator = adGroup.keywords()
+					.withCondition("Text = '"+keywordName+"'")
+					.get();
+			}
+			else
+			{
+				var keywordIterator = adGroup.keywords()
+					.withCondition('Text = "'+keywordName+'"')
+					.get();
+			}
+			
 			while (keywordIterator.hasNext()) {
 				var keyword = keywordIterator.next();
 				keyword.pause();
