@@ -230,7 +230,7 @@ function main()
 		// LABEL_SKIP
 		if(getLabelsByName(LABEL_SKIP) == false)
 		{
-			Logger.log("Label (" + ADGROUPPLACEHOLDER + ") does not exist. Creating this Label once...");
+			Logger.log("Label (" + LABEL_SKIP + ") does not exist. Creating this Label once...");
 			AdWordsApp.createLabel(LABEL_SKIP);
 		}
 		// ------------------------------------------------- //
