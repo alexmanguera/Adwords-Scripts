@@ -55,7 +55,7 @@ ver 1.3
 
 - - - - - - - - - - - - - - - - - - - - - 
 
-# MCC Ad Group Cleaner - Refinement #
+# Ad Group Cleaner - Refinement #
 
 Takes each keyword in an Ad Group, converts it to the campaign match type (exact or BMM), and then compares its context against the name of each ad group in the campaign. At this point it scores itself by similarity to the ad group name, and then moves itself into the most relevant ad group name within the campaign.
 
