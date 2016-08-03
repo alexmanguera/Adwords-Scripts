@@ -281,7 +281,14 @@ function main()
 				if(adGroupIterator.hasNext())
 				{
 					var adGroup = adGroupIterator.next();
-					var keywordIterator = adGroup.keywords().get();
+					
+					//var keywordIterator = adGroup.keywords().get();
+						
+					// skip keywords that has been labeled with "MOVED_STS".
+					var keywordIterator = adGroup.keywords()
+						.withCondition('LabelNames CONTAINS_NONE ["' + LABEL_NAME + '"]')
+						.withCondition("Status = ENABLED")
+						.get();
 					
 					Logger.log('Total Keywords found : ' + keywordIterator.totalNumEntities());
 					
@@ -291,6 +298,14 @@ function main()
 						{
 							var keyword = keywordIterator.next();
 							var originalAdGroup = keyword.getAdGroup().getName();
+							
+							// just notify if this keyword is already PAUSED and would skip it.
+							if(keyword.isPaused() == true)
+							{
+								Logger.log("IS PAUSED: " + keyword.getText());
+								continue;
+							}
+							//-----------------------------------------------------------------
 							
 							// skip checking semantic similarity if keyword and adgroup is a perfect match.
 							if(keyword.getText() == originalAdGroup)
@@ -350,11 +365,13 @@ function main()
 						Logger.log('==============================================================');
 						Logger.log("\nCurrently Processing Ad Group: " + adGroup.getName() + "...");
 												
-						var keywordIterator = adGroup.keywords().get();
-							//.withCondition('CampaignName = "'+ campaignName +'"')
-							//.withCondition('Name CONTAINS_IGNORE_CASE "' + adGroup.getName() +'"')
-							//.withCondition("Status = ENABLED")
-							//.get();
+						//var keywordIterator = adGroup.keywords().get();
+
+						// skip keywords that has been labeled with "MOVED_STS".
+						var keywordIterator = adGroup.keywords()
+						.withCondition('LabelNames CONTAINS_NONE ["' + LABEL_NAME + '"]')
+						.withCondition("Status = ENABLED")
+						.get();
 						
 						Logger.log('Total Keywords: ' + keywordIterator.totalNumEntities());
 						
@@ -365,6 +382,14 @@ function main()
 								var keyword = keywordIterator.next();
 								var originalAdGroup = keyword.getAdGroup().getName();
 								
+								// just notify if this keyword is already PAUSED and would skip it.
+								if(keyword.isPaused() == true)
+								{
+									Logger.log("IS PAUSED: " + keyword.getText());
+									continue;
+								}
+								//-----------------------------------------------------------------
+							
 								// skip checking semantic similarity if keyword and adgroup is a perfect match.
 								if(keyword.getText() == originalAdGroup)
 								{
