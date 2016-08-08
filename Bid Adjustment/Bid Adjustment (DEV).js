@@ -291,9 +291,8 @@ function main()
 										" | 14 Day Bid = " + b_bid_result +
 										" | 30 Day Bid = " + c_bid_result +
 										" | All Time = " + d_bid_result +
-										" | [Current Bid = " + currentCPC + 
-										" **New Bid = " + finalOutputNewBid +
-										" **Conversions = " + d_convertedclicks
+										" | Current Bid = " + currentCPC + 
+										" **New Bid = " + finalOutputNewBid
 									  );
 						}
 						else
@@ -303,9 +302,8 @@ function main()
 										" | 14 Day Bid = " + b_bid_result_roas +
 										" | 30 Day Bid = " + c_bid_result_roas +
 										" | All Time = " + d_bid_result_roas +
-										" | [Current Bid = " + currentCPC + 
-										" **New Bid = " + finalOutputNewBid +
-										" **Conversions = " + d_convertedclicks
+										" | Current Bid = " + currentCPC + 
+										" **New Bid = " + finalOutputNewBid
 									  );
 							
 						}
