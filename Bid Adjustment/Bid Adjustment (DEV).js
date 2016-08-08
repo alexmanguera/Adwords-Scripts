@@ -2,7 +2,7 @@
 
 ====================
 Bid Adjustment
-Current Version: 1.3
+Current Version: 1.4
 ====================
 
 Change Log:
@@ -14,6 +14,8 @@ ver 1.2
 - Make use of array for Campaigns to allow processing of multiple Campaigns.
 ver 1.3
 - Allows to Compute for New Bid based on either ROAS method or conventional method.
+ver 1.4
+- Use "All-Time" bid as the new bid if keyword conversion for All-Time is not greater than 1.
 
 **************/
 
@@ -224,11 +226,20 @@ function main()
 						}
 						// --------------------------
 						
-						
-						var bid_array = [a_bid_result, b_bid_result, c_bid_result, d_bid_result];
-						// ROAS
-						var bid_array_roas = [a_bid_result_roas, b_bid_result_roas, c_bid_result_roas, d_bid_result_roas];
-						
+						// ===============================================
+						if(d_convertedclicks > 1)
+						{
+							var bid_array = [a_bid_result, b_bid_result, c_bid_result, d_bid_result];
+							// ROAS
+							var bid_array_roas = [a_bid_result_roas, b_bid_result_roas, c_bid_result_roas, d_bid_result_roas];
+						}
+						else
+						{
+							var bid_array = ["0.00", "0.00", "0.00", d_bid_result];
+							// ROAS
+							var bid_array_roas = ["0.00", "0.00", "0.00", d_bid_result_roas];
+						}
+						// ===============================================
 	
 						// --------------------------
 						if(!roas_method)
@@ -281,7 +292,8 @@ function main()
 										" | 30 Day Bid = " + c_bid_result +
 										" | All Time = " + d_bid_result +
 										" | [Current Bid = " + currentCPC + 
-										" **New Bid = " + finalOutputNewBid
+										" **New Bid = " + finalOutputNewBid +
+										" **Conversions = " + d_convertedclicks
 									  );
 						}
 						else
@@ -292,7 +304,8 @@ function main()
 										" | 30 Day Bid = " + c_bid_result_roas +
 										" | All Time = " + d_bid_result_roas +
 										" | [Current Bid = " + currentCPC + 
-										" **New Bid = " + finalOutputNewBid
+										" **New Bid = " + finalOutputNewBid +
+										" **Conversions = " + d_convertedclicks
 									  );
 							
 						}
