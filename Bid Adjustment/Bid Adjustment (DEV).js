@@ -2,7 +2,7 @@
 
 ====================
 Bid Adjustment
-Current Version: 1.4
+Current Version: 1.5.1
 ====================
 
 Change Log:
@@ -16,12 +16,20 @@ ver 1.3
 - Allows to Compute for New Bid based on either ROAS method or conventional method.
 ver 1.4
 - Use "All-Time" bid as the new bid if keyword conversion for All-Time is not greater than 1.
+ver 1.5
+- Apply a limit to the increase (ex. 100% from current bid) and decrease (ex. 50% from current bid) of new bids based from the set upper-bid-limit (Max CPC).
+ver 1.5.1
+- Address issue with some incorrect results when checking for Min/Max percent increase/decrease of Bid from the Current CPC.
+- Fix error with using new bid even if 0.00, instead use the existing CPC Bid as new Bid (no changes made to CPC of the keyword).
 
 **************/
 
 var TARGET_CPA = 35;
 var UPPER_BID_LIMIT = 10;
 var TARGET_ROAS = 4;
+var MAX_PERCENT_BID_INCREASE = 100;
+var MAX_PERCENT_BID_DECREASE = 50;
+
 
 var SEVEN_DAYS = "LAST_7_DAYS";
 var FOURTEEN_DAYS = "LAST_14_DAYS";
@@ -31,7 +39,7 @@ var ALL_TIME = "ALL_TIME";
 // ---------------------------
 // A = ROAS based.
 // B = conventional.
-var SELECTED_BID_METHOD = "A";
+var SELECTED_BID_METHOD = "B";
 // ---------------------------
 
 // ---------------------------
@@ -257,16 +265,10 @@ function main()
 						
 						var errorLog = "";
 						var validNewBid = false;
+						var skipping = false;
 						
-						
-						// use upper-bid-limit value if new-bid is greater than upper-bid-limit.
-						if(finalOutputNewBid > UPPER_BID_LIMIT)
-						{
-							Logger.log("Notice!... New Bid ($"+finalOutputNewBid+") is above Upper-Bid-Limit. Using Upper-Bid-Limit as the New-Bid.");
-							finalOutputNewBid = UPPER_BID_LIMIT;
-							validNewBid = true;
-						}
-						else if(finalOutputNewBid > TARGET_CPA)
+						// ------------------------------------------------------------	
+						if(finalOutputNewBid > TARGET_CPA)
 						{
 							Logger.log("Skipping!... New Bid ($"+finalOutputNewBid+") is above Target CPA.");
 							validNewBid = false;
@@ -275,12 +277,74 @@ function main()
 						{
 							Logger.log("Skipping!... New Bid is $0.00");
 							validNewBid = false;
+							skipping = true;
 						}
 						else
 						{
 							validNewBid = true;
-						}
+						}						
+						// ------------------------------------------------------------
 						
+						
+						// ------------------------------------------------------------
+						if(!skipping)
+						{
+							// check if it passes the bid limits for an increase/decrease.
+							var resultMaxCpcLimit = checkMaxCpcLimit(currentCPC, finalOutputNewBid);
+							var applyLimitBid = false;
+							
+							if(finalOutputNewBid > currentCPC)
+							{
+								if(finalOutputNewBid > resultMaxCpcLimit)
+								{
+									applyLimitBid = true;
+									var LimitFinalOutputNewBid = resultMaxCpcLimit;
+								}else{
+									LimitFinalOutputNewBid = finalOutputNewBid;
+								}
+							}
+							if(finalOutputNewBid < currentCPC)
+							{
+								if(finalOutputNewBid < resultMaxCpcLimit)
+								{
+									applyLimitBid = true;
+									var LimitFinalOutputNewBid = resultMaxCpcLimit;
+								}else{
+									LimitFinalOutputNewBid = finalOutputNewBid;
+								}
+							}
+						}	
+						// ------------------------------------------------------------						
+						
+						// ------------------------------------------------------------
+						// check to set maxCPC with new bid
+						if(validNewBid)
+						{
+							// --------------------------------------------------------
+							// use upper-bid-limit value if new-bid is greater than upper-bid-limit.
+							if(LimitFinalOutputNewBid > UPPER_BID_LIMIT)
+							{
+								applyLimitBid = true;
+								Logger.log("Notice!... New Bid ($"+LimitFinalOutputNewBid+") is above Upper-Bid-Limit. Using Upper-Bid-Limit as the New-Bid.");
+								LimitFinalOutputNewBid = UPPER_BID_LIMIT;
+							}
+							// --------------------------------------------------------
+							if(typeof finalOutputNewBid != "undefined")
+							{
+								if(isNaN(finalOutputNewBid) == false)
+								{
+									if(applyLimitBid)
+									{
+										keywords.setMaxCpc(LimitFinalOutputNewBid);
+									}
+									else
+									{
+										keywords.setMaxCpc(finalOutputNewBid);
+									}
+								}
+							}
+						}
+						// ------------------------------------------------------------
 						
 						// ------------------------------------------------------------
 						// Display Log
@@ -309,19 +373,6 @@ function main()
 						}
 						Logger.log("\n");
 						// ------------------------------------------------------------
-						
-						
-						// check to set maxCPC with new bid
-						if(validNewBid)
-						{
-							if(typeof finalOutputNewBid != "undefined")
-							{
-								if(isNaN(finalOutputNewBid) == false)
-								{
-									keywords.setMaxCpc(finalOutputNewBid);
-								}
-							}
-						}
 						
 					} // end while
 				}
@@ -477,9 +528,70 @@ function main()
 			}
 		}
 		return str;
-	};
+	}
 	
+	// check if new bid is not beyond the set max percent limit for both increasing and decreasing bids.
+	function checkMaxCpcLimit(currentCPC, finalOutputNewBid)
+	{
+		var CorrectcurrentCPC = Number(currentCPC);
+		var CorrectfinalOutputNewBid = Number(finalOutputNewBid);
+		
+		if(CorrectfinalOutputNewBid > CorrectcurrentCPC)
+		{
+			var x = CorrectcurrentCPC;
+			var y = MAX_PERCENT_BID_INCREASE;
+			var z = parseFloat(y)/100;
+			var out = x * z;
+			out = out + x;
+			out = out.toFixed(2);
+			out = Number(out);
+			
+			
+			if(CorrectfinalOutputNewBid <= out)
+			{
+				var valid = 'OK';
+				Logger.log('OK! + New Bid (' + CorrectfinalOutputNewBid + ') is less than/equal to ' + MAX_PERCENT_BID_INCREASE + '% (' + out + ') of Current CPC: ' + CorrectcurrentCPC);
+				
+				//return true;
+			}
+			else if(CorrectfinalOutputNewBid > out)
+			{
+				var valid = 'NOT OK';
+				Logger.log('NOT OK! + New Bid (' + CorrectfinalOutputNewBid + ') is more than ' + MAX_PERCENT_BID_INCREASE + '% (' + out + ') of Current CPC: ' + CorrectcurrentCPC + '. Applying (' + out + ') as the new bid');
+				
+				//return false;
+			}
+			var output = out;
+		}
+		else if(CorrectfinalOutputNewBid < CorrectcurrentCPC)
+		{
+			var x = CorrectcurrentCPC;
+			var y = MAX_PERCENT_BID_DECREASE;
+			var z = parseFloat(y)/100;
+			var out = x * z;
+			out = out.toFixed(2);
+			out = Number(out);
+			
+			if(CorrectfinalOutputNewBid >= out)
+			{
+				var valid = 'OK';
+				Logger.log('OK! - New Bid (' + CorrectfinalOutputNewBid + ') is more than/equal to ' + MAX_PERCENT_BID_DECREASE + '% (' + out + ') of Current CPC: ' + CorrectcurrentCPC);
+				
+				//return true;
+			}
+			else
+			{
+				var valid = 'NOT OK';
+				Logger.log('NOT OK! - New Bid (' + CorrectfinalOutputNewBid + ') is less than ' + MAX_PERCENT_BID_DECREASE + '% (' + out + ') of Current CPC: ' + CorrectcurrentCPC + '. Applying (' + out + ') as the new bid');
+				
+				//return false;
+			}
+			var output = out;
+		}
+		return output;
+	}
 	
+	//checkMaxCpcLimit();
 	
 	getAllKeywordsStats(CAMPAIGN_NAME);
 	

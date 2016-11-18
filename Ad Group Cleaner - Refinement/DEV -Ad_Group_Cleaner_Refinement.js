@@ -2,7 +2,7 @@
 
 ====================
 Ad Group Refiner/Cleaner
-Current Version: 1.3
+Current Version: 1.4
 ====================
 
 Change Log:
@@ -15,13 +15,15 @@ ver 1.2
 - Creates the Ad Group placeholder if it does not exists.
 ver 1.3
 - Ability to Skip certain Ad Groups/Campaigns that are assigned with the label "STS_SKIP".
+ver 1.4
+- Process keywords stored in the "Temp_Storage" especially when new Ad Groups have been added.
 **************/
 
 var LABEL_NAME = "MOVED STS";
 var LABEL_SKIP = "STS_SKIP";
 
 // set minthresholdscore to "0" to disable it.
-var MINTHRESHOLDSCORE = "0.8";
+var MINTHRESHOLDSCORE = "0.7";
 var ADGROUPPLACEHOLDER = "Temp_Storage";
 
 //--------------------------------------------//
@@ -31,7 +33,10 @@ var ADGROUPPLACEHOLDER = "Temp_Storage";
 //var SPREADSHEET_URL = 'https://docs.google.com/spreadsheets/d/10raJpYF-FJ120iiModiCKwC1UAkhWURSKCo20ONL_pM/edit#gid=0';
 
 // DEVELOPMENT:
-var SPREADSHEET_URL = 'https://docs.google.com/spreadsheets/d/1BXRZjdnMqt9ushaPh34ZkC0KGhfgcF8K6-sCBcsje20/edit#gid=0';
+// for cheeky food events
+//var SPREADSHEET_URL = 'https://docs.google.com/spreadsheets/d/1BXRZjdnMqt9ushaPh34ZkC0KGhfgcF8K6-sCBcsje20/edit#gid=0';
+// for wridgways
+var SPREADSHEET_URL = 'https://docs.google.com/spreadsheets/d/1Y3Nu1yklOBBA9OIEXxK0UDCkeEhx6V_mG98WpuCLAUc/edit#gid=0';
 
 var SHEET_NAME = 'Sheet1';
 
@@ -233,6 +238,12 @@ function main()
 			Logger.log("Label (" + LABEL_SKIP + ") does not exist. Creating this Label once...");
 			AdWordsApp.createLabel(LABEL_SKIP);
 		}
+		// LABEL_NAME
+		if(getLabelsByName(LABEL_NAME) == false)
+		{
+			Logger.log("Label (" + LABEL_NAME + ") does not exist. Creating this Label once...");
+			AdWordsApp.createLabel(LABEL_NAME);
+		}
 		// ------------------------------------------------- //
 		
 		var campaignIterator = AdWordsApp.campaigns()
@@ -315,7 +326,7 @@ function main()
 							}
 							else
 							{
-								Logger.log(getAdGroups(campaignName, keyword.getText(), originalAdGroup, skipAdGroupValue));
+								Logger.log(getAdGroups(campaignName, keyword.getText(), keyword.getMaxCpc(), originalAdGroup, skipAdGroupValue, isFromTempStorage = false));
 							}
 						}
 						// ------------------------------------------------- //		  
@@ -349,12 +360,14 @@ function main()
 					.withCondition('LabelNames CONTAINS_NONE ["' + LABEL_SKIP + '"]')
 					.withCondition('Name != "'+ADGROUPPLACEHOLDER+'"')
 					.withCondition("Status = ENABLED")
+					.orderBy('Name ASC')
 					.get();
 								
 				var skipAdGroupValue = true;
 								
 				Logger.log('Ad Groups to Process: All');
 				Logger.log('Total adGroups found : ' + adGroupIterator.totalNumEntities());
+				Logger.log('*******************\n');
 				
 				if(adGroupIterator.hasNext())
 				{				
@@ -363,7 +376,7 @@ function main()
 						var adGroup = adGroupIterator.next();
 						
 						Logger.log('==============================================================');
-						Logger.log("\nCurrently Processing Ad Group: " + adGroup.getName() + "...");
+						Logger.log("Currently Processing Ad Group: " + adGroup.getName() + "...");
 												
 						//var keywordIterator = adGroup.keywords().get();
 
@@ -373,7 +386,7 @@ function main()
 						.withCondition("Status = ENABLED")
 						.get();
 						
-						Logger.log('Total Keywords: ' + keywordIterator.totalNumEntities());
+						Logger.log('Total Keywords: ' + keywordIterator.totalNumEntities() + '\n');
 						
 						if(keywordIterator.hasNext())
 						{
@@ -389,7 +402,9 @@ function main()
 									continue;
 								}
 								//-----------------------------------------------------------------
-							
+								
+								//Logger.log('Max CPC = ' + keyword.getMaxCpc());
+								
 								// skip checking semantic similarity if keyword and adgroup is a perfect match.
 								if(keyword.getText() == originalAdGroup)
 								{
@@ -398,7 +413,7 @@ function main()
 								}
 								else
 								{
-									Logger.log(getAdGroups(campaignName, keyword.getText(), originalAdGroup, skipAdGroupValue));
+									Logger.log(getAdGroups(campaignName, keyword.getText(), keyword.getMaxCpc(), originalAdGroup, skipAdGroupValue, isFromTempStorage = false));
 								}
 							}
 						}
@@ -406,15 +421,67 @@ function main()
 						{
 							Logger.log("No Keywords found!");	
 						}
+					} // end while
+					
+					// ======================================================
+					// START Process Ad Group of Below-Min-Threshold keywords
+					Logger.log('==============================================================');
+					Logger.log("\nCurrently Processing Ad Group: " + ADGROUPPLACEHOLDER + "...");
+						
+					// skip keywords that has been labeled with "MOVED_STS".
+					var keywordIterator = AdWordsApp.keywords()
+					.withCondition('CampaignName = "' + campaignName + '"')
+					.withCondition('AdGroupName = "' + ADGROUPPLACEHOLDER + '"')
+					.withCondition('LabelNames CONTAINS_NONE ["' + LABEL_NAME + '"]')
+					.withCondition("Status = ENABLED")
+					.get();
+					
+					Logger.log('Total Keywords: ' + keywordIterator.totalNumEntities() + '\n');
+					
+					if(keywordIterator.hasNext())
+					{
+						while(keywordIterator.hasNext())
+						{
+							var keyword = keywordIterator.next();
+							var originalAdGroup = keyword.getAdGroup().getName();
+							
+							// just notify if this keyword is already PAUSED and would skip it.
+							if(keyword.isPaused() == true)
+							{
+								Logger.log("IS PAUSED: " + keyword.getText());
+								continue;
+							}
+							//-----------------------------------------------------------------
+						
+							// skip checking semantic similarity if keyword and adgroup is a perfect match.
+							if(keyword.getText() == originalAdGroup)
+							{
+								Logger.log("Skip Moving... Keyword: " + keyword.getText() + " and Ad Group: " + originalAdGroup + " is already a perfect match!");
+								continue;
+							}
+							else
+							{
+								Logger.log(getAdGroups(campaignName, keyword.getText(), keyword.getMaxCpc(), originalAdGroup, skipAdGroupValue, isFromTempStorage = true));
+							}
+						}
 					}
+					else
+					{
+						Logger.log("No Keywords found!");	
+					}
+					// END Process Ad Group of Below-Min-Threshold keywords
+					// =====================================================
+					
+					
 					Logger.log('\n=====');
 					Logger.log("Done!");
 					Logger.log('=====');
-				}
+		
+				} // end if
 				else
 				{
 					Logger.log("No available Ad Group found: " + ssSelectedAdGroup);
-				}
+				} // end else
 			}
 			// ------------------------------------------------- //		  
 			for(var y = 2; y <= lastRow; y++)
@@ -461,7 +528,7 @@ function main()
 	// --------------------------------------------
 	
 	// --------------------------------------------
-	function getAdGroups(campaignName, keyword, originalAdGroup, skipAdGroup) {
+	function getAdGroups(campaignName, keyword, keywordCpc, originalAdGroup, skipAdGroup, isFromTempStorage) {
 		//var adGroupIterator = AdWordsApp.adGroups().get();
 		var adGroupIterator = AdWordsApp.adGroups()
 							.withCondition('CampaignName CONTAINS "'+campaignName+'"')
@@ -481,6 +548,12 @@ function main()
 		var didNotMetMinThreshold = false;
 		var tempStorageForInvalidKeywords = [];
 		var selectedAdGroupName = "";
+		// Jaro
+		var jaroMethod = false;
+		var tempAdGroupNamePrevious = "";
+		var jaroWinklerScore = 0.0;
+		var JaroWinklerScoreWinner = 0.0;
+		var jaroWinklerAdGroupWinner = "";
 		
 		// -------------------------------
 		// check to see if label name has already been created.
@@ -502,7 +575,7 @@ function main()
 			
 			var cleanAdGroupName = removeSpecialChars(adGroupName);
 			var cleanKeyword = removeSpecialChars(keyword);
-			
+				
 			// --------------------------------------------
 			if(cleanKeyword.toLowerCase() == originalAdGroup.toLowerCase())
 			{
@@ -530,28 +603,59 @@ function main()
 			else
 			{
 				var semanticSimilarity = getExternal(cleanAdGroupName, cleanKeyword);
+			
+				// #################################
+				Logger.log(keyword + " | " + cleanAdGroupName + " = " + semanticSimilarity);
+				// #################################
 				
 				// --------------------------------------------
 				// In case of a semantic score tie, do a jaro winkler comparison.
-				if(semanticSimilarity == keywordScore)
+				if(semanticSimilarity == keywordScore && semanticSimilarity != 0.0)
 				{
-					var formerAdGroupComboScore = calculateMatch.jwDistance(adGroupNameForNewKeyword, cleanKeyword);
+					var formerAdGroupComboScore = calculateMatch.jwDistance(tempAdGroupNamePrevious, cleanKeyword);
 					var newestAdGroupComboScore = calculateMatch.jwDistance(cleanAdGroupName, cleanKeyword);
-					
-					outputJaroResult = "Semantic Tie Found! Jaro Winkler implemented...\n(" + adGroupNameForNewKeyword +", " + cleanKeyword  + "): " + formerAdGroupComboScore + " vs (" + cleanAdGroupName +", " + cleanKeyword + "): " + newestAdGroupComboScore + "\n\n";
+						
 					
 					if(newestAdGroupComboScore > formerAdGroupComboScore)
 					{
-						semanticSimilarity = newestAdGroupComboScore;
-					}else{
-						semanticSimilarity = formerAdGroupComboScore;			
+						jaroMethod = true;
+						jaroWinklerScoreWinner = newestAdGroupComboScore;
+						jaroWinklerAdGroupWinner = cleanAdGroupName;
 					}
+					else if(newestAdGroupComboScore < formerAdGroupComboScore)
+					{
+						jaroMethod = true;
+						jaroWinklerScoreWinner = formerAdGroupComboScore;
+						jaroWinklerAdGroupWinner = tempAdGroupNamePrevious;
+					}
+					
+					
+					selectedAdGroupName = jaroWinklerAdGroupWinner;
+					Logger.log("STS tie found! Comparing via Jaro...\n" + tempAdGroupNamePrevious + " = " + formerAdGroupComboScore + " - vs. - " + cleanAdGroupName + " = "+ newestAdGroupComboScore);
+					outputJaroResult = "\nJaro Winkler Winner! (" + selectedAdGroupName +": " + jaroWinklerScoreWinner + ")\n\n";
+					
+					// --------------------------------------------
+					// skip if suggested Ad Group (new Ad Group) is the same with  Original Ad Group.
+					if(selectedAdGroupName == originalAdGroup)
+					{
+						addKeywordProcess = false;
+						selectedKeyword = "Skipping...!\nKeyword: ("+ keyword +"), New suggested Ad Group (" + selectedAdGroupName + ") is the same with Original Ad Group (" + originalAdGroup + ").\n";
+						continue;
+					}
+					else
+					{
+						addKeywordProcess = true;
+						selectedKeyword = '(Winner!)\nMoving keyword to new Ad Group...\nKeyword: ' + keyword + '\nNew AdGroup: ' + selectedAdGroupName + ' / Original: ' + originalAdGroup + '\nScore: ' + keywordScore + 'Paused this Keyword from Original Ad Group!\n';
+					}
+					
 				}
 				// --------------------------------------------
 				
 				// --------------------------------------------
 				if(semanticSimilarity > keywordScore || semanticSimilarity == 1.0)
 				{
+					// Jaro
+					tempAdGroupNamePrevious = cleanAdGroupName;
 					
 					selectedAdGroupName = cleanAdGroupName;
 					
@@ -578,8 +682,10 @@ function main()
 							addKeywordProcess = false;
 							selectedKeyword = "Skipping...!\nKeyword: ("+ keyword +"), New suggested Ad Group (" + selectedAdGroupName + ") is the same with Original Ad Group (" + originalAdGroup + ").\n";
 							continue;
-						}else{
-						// --------------------------------------------
+						}
+						else
+						{
+						// --------------------------------------------							
 							addKeywordProcess = true;
 							selectedKeyword = '(Winner!)\nMoving keyword to new Ad Group...\nKeyword: ' + keyword + '\nNew AdGroup: ' + selectedAdGroupName + ' / Original: ' + originalAdGroup + '\nScore: ' + keywordScore + 'Paused this Keyword from Original Ad Group!\n';
 						}
@@ -591,16 +697,32 @@ function main()
 		
 		if(didNotMetMinThreshold == true)
 		{
-			addKeyword(campaignName, ADGROUPPLACEHOLDER, keyword);
-			pauseApplyLabelOldKeywordInAdGroup(campaignName, originalAdGroup, keyword, skipCreateNewLabel);
-			// output all sts scores for this keyword.
-			//selectedKeyword = "Keyword: ("+keyword+") - " + tempStorageForInvalidKeywords.join(", ");
-			selectedKeyword = "Alert! STS Score for Keyword: (" + keyword + ") from Ad Group: (" + originalAdGroup + ") is below Minimum Threshold. Moved to placeholder:" + ADGROUPPLACEHOLDER + ".\n";
+			// =======================
+			// do not apply adding/pausing keyword if its from Temp_Storage.
+			if(isFromTempStorage == true)
+			{
+				selectedKeyword = "Alert! STS Score for Keyword: (" + keyword + ") from Ad Group: (" + originalAdGroup + ") is below Minimum Threshold. Will remain in: (" + ADGROUPPLACEHOLDER + ").\n";
+			}
+			// =======================
+			else
+			{			
+				addKeyword(campaignName, ADGROUPPLACEHOLDER, keyword, keywordCpc);
+				pauseApplyLabelOldKeywordInAdGroup(campaignName, originalAdGroup, keyword, skipCreateNewLabel);
+				// output all sts scores for this keyword.
+				//selectedKeyword = "Keyword: ("+keyword+") - " + tempStorageForInvalidKeywords.join(", ");
+				selectedKeyword = "Alert! STS Score for Keyword: (" + keyword + ") from Ad Group: (" + originalAdGroup + ") is below Minimum Threshold. Moved to placeholder: (" + ADGROUPPLACEHOLDER + ").\n";
+			}
 		}
 		else if(addKeywordProcess == true)
 		{
-			addKeyword(campaignName, selectedAdGroupName, keyword);
+			addKeyword(campaignName, selectedAdGroupName, keyword, keywordCpc);
 			pauseApplyLabelOldKeywordInAdGroup(campaignName, originalAdGroup, keyword, skipCreateNewLabel);
+			
+			// Jaro
+			if(jaroMethod)
+			{
+				Logger.log(outputJaroResult);
+			}
 		}
 		//return outputJaroResult + selectedKeyword;
 		return selectedKeyword;
@@ -608,7 +730,7 @@ function main()
 	// --------------------------------------------
 	
 	// --------------------------------------------
-	function addKeyword(campaignName, adGroupName, keywordName) {
+	function addKeyword(campaignName, adGroupName, keywordName, keywordCpc) {
 		var adGroupIterator = AdWordsApp.adGroups()
 			.withCondition('CampaignName CONTAINS "'+campaignName+'"')
 			.withCondition('Name = "'+adGroupName+'"')
@@ -619,6 +741,7 @@ function main()
 
 			adGroup.newKeywordBuilder()
 			.withText(keywordName)
+			.withCpc(keywordCpc)
 			.build();
 		}
 	}

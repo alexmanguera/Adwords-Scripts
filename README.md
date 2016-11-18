@@ -1,8 +1,46 @@
+# Exact/Broad Organizer #
+
+### Functionality / Features ###
+
+A script which ads all the keywords from the campaign into a 'Negative keyword list'
+Each time it runs, it checks the keywords in the campaign against those against the 'Negative keyword list' , and adds any that are not there.
+
+
+### How do I get set up? ###
+
+* Provide the Campaign Name where the script will be processed.
+***var CAMPAIGN_NAME***
+
+### Change Log ###
+ver 1.0
+
+* Iterate over all keywords in a Campaign and copy the keyword to the Negative keyword list.
+
+ver 1.1
+
+* Create Negative Keyword list based off of the Campaign.
+
+ver 1.2
+
+* Ability to run on multiple Campaigns by specifying the Campaign Names within the CAMPAIGN_NAME array.
+
+* Search for Unused Negative Keywords and remove from the list.
+
+ver 1.2.1 (Bug Fix)
+
+* Searching of keywords that has Exact Match Type (has [ ] symbols).
+
+ver 1.2.2 (Bug Fix)
+
+* Resolve issue with Phrase Match Type keywords.
+
+- - - - - - - - - - - - - - - - - - - - - 
+
 # MCC Ad Checker #
 
 ### Functionality / Features ###
 
- A google script that checks that active adgroups within active campaigns have 2 live ads present, other wise a notification is sent to designated email as an alert.
+A google script that checks that active adgroups within active campaigns have 2 live ads present, other wise a notification is sent to designated email as an alert.
 
 This alert will state the account name, as well as the campaign/adgroups that do not meet this requirement. 
 
@@ -53,6 +91,32 @@ ver 1.3
 * Allows to Compute for New Bid based on either ROAS method or conventional method.
 * Select a method via the constant "var SELECTED_BID_METHOD".
 
+ver 1.4
+
+* Use "All-Time" bid as the new bid if keyword conversion for All-Time is not greater than 1.
+
+ver 1.5
+
+* Apply a limit to the increase (ex. 100%) and decrease (ex. 50%) of new bids based from the set upper-bid-limit (Max CPC).
+
+ver 1.5.1
+
+* Address issue with some incorrect results when checking for Min/Max percent increase/decrease of Bid from the Current CPC.
+* Fix error with using new bid even if 0.00, instead use the existing CPC Bid as new Bid (no changes made to CPC of the keyword).
+
+ver 2.0
+
+* Complete overhaul of how Keyword iterations are made. Used KEYWORDS_PERFORMANCE_REPORT as initial query for keywords.
+* More optimized implementation in terms of speed execution.
+
+ver 2.0.1
+
+* Fix issue when doing comparisons of Number values. Explicitly define the values as Numbers instead of the default string (javascript default).
+
+ver 2.0.2
+
+* Include output details such as keyword id and group id to determine duplicate keywords from separate ad groups.
+
 - - - - - - - - - - - - - - - - - - - - - 
 
 # Ad Group Cleaner - Refinement #
@@ -99,6 +163,11 @@ ver 1.2
 ver 1.3
 
 * Ability to Skip certain Ad Groups/Campaigns that are assigned with the label "STS_SKIP".
+
+ver 1.4
+
+* Processing of Temp_Storage (Ad Group for below-min-threshold keywords).
+* Carry over the MaxCPC value of a moved keyword.
 - - - - - - - - - - - - - - - - - - - - - 
 
 
